@@ -67,7 +67,7 @@ def draw_lines_from_file(path,s_path,col):
     r = rrule.rrule(rrule.DAILY, dtstart=start_time, until=end_time).count()
     plt.plot([l, r], [ys_en[event_id], ys_en[event_id]], c='orange', linestyle='--')
     plt.yticks(list(y_list), y_label)
-    plt.title(EVENT_NAME + "_event_path"  + str(ys_en[event_id])+'_'+str(r_size))
+    plt.title(EVENT_NAME + "_event_path_"  + str(ys_en[event_id])+'_'+str(r_size))
     #plt.savefig(event_name + '_' + str(ys_en[event_id]) + '.png')
     # 读取文件并解析每行数据
     for item in path:
