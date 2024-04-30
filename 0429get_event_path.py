@@ -9,7 +9,7 @@ N = 500000
 Time = {} #时间映射成数字
 ys_Time = {}#数字映射成时间
 zitu = []
-TT=[]
+
 sorted_T=[]
 entity = {}
 fan_entity={} #反向 数字-》实体
@@ -29,7 +29,7 @@ y_label=[]
 value_time=set() #有效时间
 cnt=0
 spec_path=set()
-
+add_path=set()
 PATH = "triples_zh_time/"
 FILE = "triples_zh_20_23.txt"
 EVENT_NAME = "反美猪公投"
@@ -107,8 +107,8 @@ judge_edge_front={}
 judge_edge_back={}
 def find_paths_back(time, current_edge, path):
     path.append(current_edge)
-    global cnt
     current_en = current_edge[3]
+    global cnt
     next_edges=[]
     for t in tri_time[time]:
         if current_en==t[0]:
@@ -126,9 +126,6 @@ def find_paths_back(time, current_edge, path):
         if((edge[1]==focus_entity )or (edges[3]==focus_entity)): #如果该路径中包含蔡英文实体
             flag=True
         Path.add(edge)
-    if(flag==True):
-        for edge in path:
-            spec_path.add(edge)  #将该路径加入到特殊画线的spec_path中
     cnt+=1
 
     path.pop()
@@ -154,11 +151,27 @@ def find_paths_front(time, current_edge, path):
         if ((edge[1] == entity["蔡英文"]) or (edges[3] == entity["蔡英文"])):  # 如果该路径中包含蔡英文实体
             flag = True
         Path.add(edge)
-    if (flag == True):
-        for edge in path:
-            spec_path.add(edge)  # 将该路径加入到特殊画线的spec_path中
     cnt+=1
     path.pop(0)
+
+def find_paths(edges, current_edge, path):
+    path.append(current_edge)
+
+    current_x = current_edge[2]
+    current_y = current_edge[3]
+
+    next_edges = [edge for edge in edges if edge[0] == current_x and edge[1] == current_y]
+    if len(next_edges) > 0:
+        for next_edge in next_edges:
+            find_paths(edges, next_edge, path)
+    flag=False
+    for edge in path :
+        if edge[1] ==focus_entity :
+            flag=True
+    if flag==True:
+        for edge in path:
+            spec_path.add(edge)
+
 def get_path():
     for edge in edges[event_id]:
         path = []
@@ -168,15 +181,19 @@ def get_path():
             #path.append(tmp)
             find_paths_back(t,tmp,path) #时间 边 路径
             find_paths_front(t-2,tmp,path)
+
         else:
             t = Time[edge[2]]
             tmp = (t - 1, edge[0], t, event_id)
             #path.append(tmp)
             find_paths_back(t, tmp, path)
             find_paths_front(t-2, tmp, path)
-
-
-
+    l_path=list(Path)
+    for edge in l_path:
+        s_path = []
+        find_paths(l_path, edge, s_path)
+    #res=find_paths(l_path,[],0,focus_entity)
+    #print()
         #find_paths(F_zitu, edge, path)
 
 def get_zitu(id):
@@ -270,7 +287,7 @@ def filt_zitu(num):
     with open(PATH + 'ys_node_mapping.txt', 'w',encoding='utf-8') as output_file:
         for i in sorted_en:
             output_file.write(f"{fan_entity[i[0]]}  映射为： {ys_en[i[0]]} 出现次数：{zitu_entity[i[0]]} \n")
-            if(zitu_entity[i[0]]>=3):
+            if(zitu_entity[i[0]]>=num):
                 y_list.append(ys_en[i[0]])
                 y_label.append(fan_entity[i[0]])
 
@@ -278,7 +295,7 @@ def filt_zitu(num):
         a=ys_en[item[1]]
         b=ys_en[item[3]]  #统计每个三元组的头尾实体映射id
 
-        if(zitu_entity[item[1]]>=3 and zitu_entity[item[3]]>=3): #路径中该结点出现次数小于3 就滤掉
+        if(zitu_entity[item[1]]>=num and zitu_entity[item[3]]>=num): #路径中该结点出现次数小于num 就滤掉
             ys_path.append((item[0],a,item[2],b))
     return ys_path
 
@@ -331,7 +348,7 @@ sorted_zitu=get_zitu(event_id)
 focus_entity=entity[FOCUS_ENT]
 focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST if e in entity.keys()]
 
-get_path()#获得子图路径
+get_path(3)#获得子图路径
 ys_path=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径
 print(cnt)
 
