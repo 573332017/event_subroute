@@ -9,3 +9,7 @@ New_get_most_path.py
 <span style="color: red; font-weight: bold;">图例中的横坐标设置为月份 纵坐标为路径中所有出现的实体</span>
 
 **注意：设置FOCUS_ENT_LIST时，列表内包含的实体应在路径图内有出现过，否则应该会报错**
+
+0429get_event_path.py
+
+修改了查找与focus_entity有关路径的方式，防止因剪枝而漏搜路径，但缺点是文件运行时间会变长，后续会想办法优化
