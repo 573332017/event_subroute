@@ -105,7 +105,7 @@ def draw_lines_from_file(path,s_path,col):
     for point_pair in spec_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]],"r")
-    plt.savefig(PATH + EVENT_NAME + "_event_path" + str(ys_en[event_id]) +'_'+str(r_size)+'.png')
+    plt.savefig(PATH + EVENT_NAME + "_event_path_" + str(ys_en[event_id]) +'_'+str(r_size)+'.png')
     # plt.show()
 
 judge_edge_front={}
@@ -291,7 +291,8 @@ def filt_zitu(num):
 
     #与事件有关的一条路径内的实体不在出现最多的num个实体映射里 把他们加进去
     if (event_id not in num_en):
-        up+=1
+        if up  in ys_en.values():
+            up+=1
         ys_en[event_id]=up
         num_en.append(event_id)
     ext=1
