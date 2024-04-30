@@ -67,7 +67,7 @@ def draw_lines_from_file(path,s_path,col):
     r = rrule.rrule(rrule.DAILY, dtstart=start_time, until=end_time).count()
     plt.plot([l, r], [ys_en[event_id], ys_en[event_id]], c='orange', linestyle='--')
     plt.yticks(list(y_list), y_label)
-    plt.title(EVENT_NAME + '_' + str(ys_en[event_id])+'_'+str(r_size))
+    plt.title(EVENT_NAME + "_event_path"  + str(ys_en[event_id])+'_'+str(r_size))
     #plt.savefig(event_name + '_' + str(ys_en[event_id]) + '.png')
     # 读取文件并解析每行数据
     for item in path:
@@ -105,7 +105,7 @@ def draw_lines_from_file(path,s_path,col):
     for point_pair in spec_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]],"r")
-    plt.savefig(PATH + EVENT_NAME + '_' + str(ys_en[event_id]) +'_'+str(r_size)+'.png')
+    plt.savefig(PATH + EVENT_NAME + "_event_path" + str(ys_en[event_id]) +'_'+str(r_size)+'.png')
     # plt.show()
 
 judge_edge_front={}
@@ -138,6 +138,7 @@ def find_paths_back(current_time, current_edge, path,size):
     # 按照边的形式输出 画图
     for edge in path:
         Path.add(edge)
+
     cnt+=1
 
     path.pop()
@@ -270,6 +271,7 @@ def filt_zitu(num):
         for i in range(1, mid + 1):
             ys_en[sorted_en[l][0]] = mid - i
             num_en.append(sorted_en[l][0])
+
             l += 1
             ys_en[sorted_en[l][0]] = mid + i
             num_en.append(sorted_en[l][0])
@@ -287,7 +289,19 @@ def filt_zitu(num):
             l += 1
             if (l >= num): break
 
-
+    #与事件有关的一条路径内的实体不在出现最多的num个实体映射里 把他们加进去
+    if (event_id not in num_en):
+        up+=1
+        ys_en[event_id]=up
+        num_en.append(event_id)
+    ext=1
+    for i in edges:
+        if (i[0] not in num_en):
+            while (up + ext in y_list):
+                ext += 1
+            ys_en[i[0]] = up + ext
+            num_en.append(i[0])
+            ext += 1
     #print(ys_en[event_id],zitu_entity[event_id])
     ys_path=[]
     ys_spec_path=[]
@@ -298,21 +312,8 @@ def filt_zitu(num):
             y_list.append(ys_en[i])
             y_label.append(fan_entity[i])
 
-    if (fan_entity[event_id] not in y_label):
-        up+=1
-        ys_en[event_id]=up
-        y_list.append(up)
-        y_label.append(fan_entity[event_id])
-    ext=1
-    for i in edges:
-        if (fan_entity[i[0]] not in y_label):
-            while (up + ext in y_list):
-                ext += 1
-            y_list.append(up + ext)
-            ys_en[i[0]] = up + ext
-            y_label.append(fan_entity[i[0]])
-            ext += 1
-    #down=down-ext+1
+
+
     for item in Path:
         if item[1] not in ys_en or item[3] not in ys_en: continue #路径中结点不再出现最多的num个实体内 就滤掉
         a=ys_en[item[1]]
