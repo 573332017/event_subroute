@@ -43,13 +43,12 @@ ext_tri_time={}
 ext_tri_time_g={}
 # PATH = "“台湾关系法”/"
 
-PATH = "国际政治事件_100_txt/台海军演/"
-PATH_EXT="国际政治事件_frequency_10/台海军演"
-FILE = "台海军演_30days.csv"
-EVENT_NAME = "台海军演"
+PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
+PATH_EXT="国际政治事件_frequency_10/蔡英文“过境”窜美/"
+FILE = "蔡英文“过境”窜美_30days.csv"
+EVENT_NAME = "蔡英文“过境”窜美"
 ENT_NUM = 20
-FOCUS_ENT = "台海军演"
-
+FOCUS_ENT = "蔡英文“过境”窜美"
 TIME_GRANULARITY = 15
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
