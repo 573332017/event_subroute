@@ -43,13 +43,14 @@ cnt=0
 spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
-PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
-PATH_EXT="国际政治事件_frequency_10/蔡英文“过境”窜美/"
-FILE = "蔡英文“过境”窜美_30days.csv"
-EVENT_NAME = "蔡英文“过境”窜美"
+PATH = "国际政治事件_100_txt/亲美反共/"
+PATH_EXT="国际政治事件_frequency_10/亲美反共/"
+FILE = "亲美反共_30days.csv"
+EVENT_NAME = "亲美反共"
+AIM_NAME="民进党当局"
 ENT_NUM = 20
-FOCUS_ENT = "蔡英文“过境”窜美"
-TIME_GRANULARITY = 15 # 时间粒度控制
+FOCUS_ENT = "亲美反共"
+TIME_GRANULARITY = 5 # 时间粒度控制
 ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
@@ -197,7 +198,7 @@ def find_paths_back(current_time, current_edge, path,size):
 
 def find_paths(edges, current_edge, path):
     '''
-    可在此添加函数说明
+    找有关focus_entity的路径
     '''
     path.append(current_edge)
     current_x = current_edge[2]
@@ -236,7 +237,7 @@ def find_paths(edges, current_edge, path):
 
 def get_path(size):
     '''
-    在此添加函数说明
+    获得当前num个实体的子图下的路径
     '''
     for edge in F_zitu:
         path = []
@@ -245,10 +246,16 @@ def get_path(size):
 
 def get_zitu_time(id):
     '''
-    在此添加函数说明
+    获得所有出现过的时间的映射 以及按照时间从前到后 且去重后的图
     '''
     time_num = 1
     for res in sorted_T:
+        pre_time=(dt.datetime.strptime(res[2], "%Y-%m-%d").date() + dt.timedelta(days=-1)).strftime('%Y-%m-%d')
+        if pre_time not in Time:
+            time_num += 1
+            ys_Time[time_num] = pre_time
+            Time[pre_time] = time_num
+
         if res[2] not in Time:
             time_num += 1
             ys_Time[time_num] = res[2]
@@ -326,14 +333,21 @@ def filt_zitu(num):
         down = r // 2 - num
         up = r // 2 + num
     F_zitu = []
-     # 事件不再出现最多的num个实体内 事件实体重新映射
+     # 事件实体不在出现最多的num个实体内 事件实体重新映射
+    ext = 0
     if (event_id not in num_en):
-        ext = 0
         while (up + ext in ys_en.values()):
             ext+=1
         ys_en[event_id] = up + ext
         num_en.append(event_id)
-        # 把一跳子图的所有边加入路径考虑中
+
+        # 一跳子图的所有边直接加入路径中
+        if not i[1]:  # event作为头实体
+            Path.add((Time[i[2]] - 1, up + 1, Time[i[2]], ys_en[i[0]]))
+        else:
+            Path.add((Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], up + 1))
+
+        # 把一跳子图的涉及的所有实体加入映射中
         if (num <= 1e7):
             # 实体重新映射
             for i in edges[event_id]:
@@ -343,11 +357,13 @@ def filt_zitu(num):
                     ys_en[i[0]] = up + ext
                     num_en.append(i[0])
 
-        #一跳子图的所有边直接加入路径中
-        if not i[1]:  # event作为头实体
-            Path.add((Time[i[2]] - 1, up + 1, Time[i[2]], ys_en[i[0]]))
-        else:
-            Path.add((Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], up + 1))
+    # 目标实体不在出现最多的num个实体内 目标实体重新映射
+    if (aim_id not in num_en):
+        while (up + ext in ys_en.values()):
+            ext += 1
+        ys_en[aim_id] = up + ext
+        num_en.append(aim_id)
+
     #print(ys_en[event_id],zitu_entity[event_id])
     #取出现次数最多的num个元素构成的子图
 
@@ -369,10 +385,10 @@ def filt_zitu(num):
 
     return F_zitu
 
-# 调用函数进行读取JSON文件
+
 def last_element_sort(elem):
     '''
-    在此添加函数说明
+    列表按照最后一个元素排序
     '''
     return elem[-1]
 
@@ -465,6 +481,7 @@ if __name__ == '__main__':
     #sorted_T = read_txt(PATH + FILE)
     sorted_T = read_csv(PATH + FILE)
     event_id = entity[EVENT_NAME]
+    aim_id=entity[AIM_NAME]
     # sorted_zitu=get_zitu(event_id)
     sorted_zitu = get_zitu_time(event_id)
     F_zitu=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径
