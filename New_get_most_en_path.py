@@ -52,6 +52,7 @@ FOCUS_ENT = "蔡英文“过境”窜美"
 
 TIME_GRANULARITY = 15 # 时间粒度控制
 ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
+ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
@@ -259,25 +260,25 @@ def get_zitu_time(id):
 
         edges.setdefault(a, []).append((b, 0, res[2]))
         edges.setdefault(b, []).append((a, 1, res[2]))
-
+        zitu.append([Time[res[2]] - 1, a, Time[res[2]], b])
     # 举例: second_time=2020-01-01  ys_time[1]=2019-12-31
     second_time = dt.datetime.strptime(ys_Time[2], "%Y-%m-%d").date()
     ys_Time[1] = (second_time + dt.timedelta(days=-1)).strftime('%Y-%m-%d')
     Time[ys_Time[1]] = 1
 
     #子图id
-    item = id
-    for i in edges[item]:
-        if not i[1]: #item头实体
-            zitu.append([Time[i[2]]-1,item, Time[i[2]],i[0] ])
-        else:
-            zitu.append([Time[i[2]]-1,i[0],Time[i[2]],item ])
-         # 统计该子图下每个实体出现的数量
-        for j in edges[i[0]]:
-            if not j[1]: #i[0] 作为头实体
-                zitu.append([Time[j[2]]-1,i[0], Time[j[2]],j[0]])
-            else:
-                zitu.append([Time[j[2]]-1,j[0],Time[j[2]],i[0]])
+    # item = id
+    # for i in edges[item]:
+    #     if not i[1]: #item头实体
+    #         zitu.append([Time[i[2]]-1,item, Time[i[2]],i[0] ])
+    #     else:
+    #         zitu.append([Time[i[2]]-1,i[0],Time[i[2]],item ])
+    #      # 统计该子图下每个实体出现的数量
+    #     for j in edges[i[0]]:
+    #         if not j[1]: #i[0] 作为头实体
+    #             zitu.append([Time[j[2]]-1,i[0], Time[j[2]],j[0]])
+    #         else:
+    #             zitu.append([Time[j[2]]-1,j[0],Time[j[2]],i[0]])
     unique_zitu = list(set(map(tuple, zitu)))
     sorted_zitu =sorted(unique_zitu, key=lambda x: x[0])
     return sorted_zitu
