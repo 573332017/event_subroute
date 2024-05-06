@@ -43,19 +43,20 @@ ext_tri_time={}
 ext_tri_time_g={}
 # PATH = "“台湾关系法”/"
 
-PATH = "台湾岛内政治事件_100/“台湾关系法”/"
-PATH_EXT="国际政治事件_frequency_10/“台湾关系法”/"
-FILE = "“台湾关系法”_30days.csv"
-EVENT_NAME = "《台湾关系法》"
+PATH = "国际政治事件_100_txt/台海军演/"
+PATH_EXT="国际政治事件_frequency_10/台海军演"
+FILE = "台海军演_30days.csv"
+EVENT_NAME = "台海军演"
 ENT_NUM = 20
-FOCUS_ENT = "美国"
+FOCUS_ENT = "台海军演"
+
 TIME_GRANULARITY = 15
 
-# FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
-# '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
-# '中俄关系', '乌克兰', '唐纳德·特朗普']
+FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
+'俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
+'中俄关系', '乌克兰', '唐纳德·特朗普']
 
-FOCUS_ENT_LIST = ['美国', '中国' ]
+# FOCUS_ENT_LIST = ['美国', '中国' ]
 
 def draw_lines_from_file(path,s_path,ext_path,flag,col):
     if focus_entity not in ys_en:
@@ -505,7 +506,7 @@ if __name__ == '__main__':
     get_zitu(event_id)
     get_ext()
     focus_entity=entity[FOCUS_ENT]
-    focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST]
+    focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST if e in entity.keys()]
 
     get_path(TIME_GRANULARITY)#获得子图路径 限制范围
     ys_path,ys_spec_path,ys_ext_path,ys_ext_g_path=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径

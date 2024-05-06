@@ -43,14 +43,15 @@ cnt=0
 spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
-PATH = "台湾岛内政治事件_100/“台湾关系法”/"
-PATH_EXT="国际政治事件_frequency_10/“台湾关系法”/"
-FILE = "“台湾关系法”_30days.csv"
-EVENT_NAME = "《台湾关系法》"
-ENT_NUM = 20
-FOCUS_ENT = "美国"
+PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
+PATH_EXT="国际政治事件_frequency_10/蔡英文“过境”窜美"
+FILE = "蔡英文“过境”窜美_30days.csv"
+EVENT_NAME = "蔡英文“过境”窜美"
+ENT_NUM = 50
+FOCUS_ENT = "蔡英文“过境”窜美"
+
 TIME_GRANULARITY = 15 # 时间粒度控制
-ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
+ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
