@@ -43,12 +43,12 @@ ext_tri_time={}
 ext_tri_time_g={}
 # PATH = "“台湾关系法”/"
 
-PATH = "台湾岛内政治事件_100/“台湾关系法”/"
-PATH_EXT="国际政治事件_frequency_10/“台湾关系法”/"
-FILE = "“台湾关系法”_30days.csv"
-EVENT_NAME = "《台湾关系法》"
+PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
+PATH_EXT="国际政治事件_frequency_10/蔡英文“过境”窜美/"
+FILE = "蔡英文“过境”窜美_30days.csv"
+EVENT_NAME = "蔡英文“过境”窜美"
 ENT_NUM = 20
-FOCUS_ENT = "美国"
+FOCUS_ENT = "蔡英文“过境”窜美"
 TIME_GRANULARITY = 15
 
 # FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
@@ -207,7 +207,7 @@ def find_paths_front(current_time, current_edge, path,size):
         if current_time-i in tri_time.keys(): #如果时间点内存在三元组才进一步处理
             for t in tri_time[current_time -i]:
                 if current_en == t[1]:
-                    next_edges.append((current_time- i, t[0], current_time, t[1]))
+                    next_edges.append((current_time- i-1, t[0], current_edge[0], t[1]))
 
     if len(next_edges) > 0:
         for next_edge in next_edges:
@@ -373,7 +373,7 @@ def filt_zitu(num):
     ys_spec_path=[]
     ys_ext_path=[]
     ys_ext_g_path=[]
-    with open(PATH + 'ys_node_mapping.txt', 'w',encoding='utf-8') as output_file:
+    with open(PATH + 'ys_node_event_mapping.txt', 'w',encoding='utf-8') as output_file:
         for i in num_en:
             output_file.write(f"{fan_entity[i]}  映射为： {ys_en[i]} 出现次数：{zitu_entity[i]} \n")
             # if(ys_en[i]>=down and ys_en[i[0]]<=up):
