@@ -43,14 +43,14 @@ cnt=0
 spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
-PATH = "国际政治事件_100_txt/亲美反共/"
-PATH_EXT="国际政治事件_frequency_10/亲美反共/"
-FILE = "亲美反共_30days.csv"
-EVENT_NAME = "亲美反共"
-ENT_NUM = 40
-FOCUS_ENT = "亲美反共"
-TIME_GRANULARITY = 5 # 时间粒度控制
-ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
+PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
+PATH_EXT="国际政治事件_frequency_10/蔡英文“过境”窜美/"
+FILE = "蔡英文“过境”窜美_30days.csv"
+EVENT_NAME = "蔡英文“过境”窜美"
+ENT_NUM = 20
+FOCUS_ENT = "蔡英文“过境”窜美"
+TIME_GRANULARITY = 15 # 时间粒度控制
+ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
@@ -265,7 +265,7 @@ def get_zitu_time(id):
     Time[ys_Time[1]] = 1
 
     #子图id
-    item = id
+    # item = id
     # for i in edges[item]:
     #     if not i[1]: #item头实体
     #         zitu.append([Time[i[2]]-1,item, Time[i[2]],i[0] ])
@@ -328,19 +328,21 @@ def filt_zitu(num):
     F_zitu = []
      # 事件不再出现最多的num个实体内 事件实体重新映射
     if (event_id not in num_en):
-        ys_en[event_id] = up + 1
+        ext = 0
+        while (up + ext in ys_en.values()):
+            ext+=1
+        ys_en[event_id] = up + ext
         num_en.append(event_id)
-        ext = 1
         # 把一跳子图的所有边加入路径考虑中
         if (num <= 1e7):
             # 实体重新映射
             for i in edges[event_id]:
                 if (i[0] not in num_en):
-                    while (up + ext in y_list):
+                    while (up + ext in ys_en.values()):
                         ext += 1
                     ys_en[i[0]] = up + ext
                     num_en.append(i[0])
-                    ext += 1
+
         #一跳子图的所有边直接加入路径中
         if not i[1]:  # event作为头实体
             Path.add((Time[i[2]] - 1, up + 1, Time[i[2]], ys_en[i[0]]))
@@ -452,7 +454,10 @@ def get_ext():
 
                 # 遍历每一行并输出
                 for row in reader:
-                    ext_tri_time_g.setdefault(Time[row[5]],set()).add((entity[row[0]], entity[row[3]]))
+                    if entity[row[0]] not in ys_en or entity[row[3]] not in ys_en: continue
+                    a = ys_en[entity[row[0]]]
+                    b = ys_en[entity[row[3]]]  # 统计每个三元组的头尾实体映射id
+                    ext_tri_time_g.setdefault(Time[row[5]],set()).add((a, b))
 
 
 if __name__ == '__main__':
