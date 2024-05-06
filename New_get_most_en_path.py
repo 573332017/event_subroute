@@ -341,12 +341,6 @@ def filt_zitu(num):
         ys_en[event_id] = up + ext
         num_en.append(event_id)
 
-        # 一跳子图的所有边直接加入路径中
-        if not i[1]:  # event作为头实体
-            Path.add((Time[i[2]] - 1, up + 1, Time[i[2]], ys_en[i[0]]))
-        else:
-            Path.add((Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], up + 1))
-
         # 把一跳子图的涉及的所有实体加入映射中
         if (num <= 1e7):
             # 实体重新映射
@@ -356,6 +350,11 @@ def filt_zitu(num):
                         ext += 1
                     ys_en[i[0]] = up + ext
                     num_en.append(i[0])
+                    # 一跳子图的所有边直接加入路径中
+                if not i[1]:  # event作为头实体
+                    Path.add((Time[i[2]] - 1, ys_en[event_id], Time[i[2]], ys_en[i[0]]))
+                else:
+                    Path.add((Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], ys_en[event_id]))
 
     # 目标实体不在出现最多的num个实体内 目标实体重新映射
     if (aim_id not in num_en):
