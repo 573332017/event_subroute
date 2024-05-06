@@ -21,7 +21,8 @@ entity = {}
 fan_entity={} #反向 数字-》实体
 zitu_path=[]#子图路径按路径输出
 Path=set()#子图路径按边输出
-edges = set() #总图的所有边
+edges = set() #总图中有关event的所有边
+edges_aim=set() #总图中有关aim实体的所有边
 fig, ax = plt.subplots(dpi=150, figsize=(40, 40))
 # 统计该子图下每个实体出现的数量
 zitu_entity = {}
@@ -43,13 +44,13 @@ ext_tri_time={}
 ext_tri_time_g={}
 # PATH = "“台湾关系法”/"
 
-PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
-PATH_EXT="国际政治事件_frequency_10/蔡英文“过境”窜美/"
-FILE = "蔡英文“过境”窜美_30days.csv"
-EVENT_NAME = "蔡英文“过境”窜美"
+PATH = "国际政治事件_100_txt/亲美反共/"
+PATH_EXT="国际政治事件_frequency_10/亲美反共/"
+FILE = "亲美反共_30days.csv"
+EVENT_NAME = "亲美反共"
 ENT_NUM = 20
-FOCUS_ENT = "蔡英文“过境”窜美"
-TIME_GRANULARITY = 15
+FOCUS_ENT = "亲美反共"
+TIME_GRANULARITY = 5
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
@@ -58,6 +59,9 @@ FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国
 # FOCUS_ENT_LIST = ['美国', '中国' ]
 
 def draw_lines_from_file(path,s_path,ext_path,flag,col):
+    '''
+    绘图函数
+    '''
     if focus_entity not in ys_en:
         print(f"以{TIME_GRANULARITY}天为关联时间下不存在 {FOCUS_ENT} 实体,请调整关联时间范围")
         return
@@ -141,6 +145,9 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
 judge_edge_front={}
 judge_edge_back={}
 def find_paths_back(current_time, current_edge, path,size):
+    '''
+    寻找后向路径
+    '''
     path.append(current_edge)
     global cnt
     current_en = current_edge[3]
@@ -189,6 +196,9 @@ def find_paths_back(current_time, current_edge, path,size):
 
     path.pop()
 def find_paths_front(current_time, current_edge, path,size):
+    '''
+    寻找前向路径
+    '''
     path.insert(0,current_edge) #向头部插入边
     global cnt
     current_en = current_edge[1]
@@ -277,7 +287,7 @@ def get_path(size):
 
 def get_zitu(id):
     '''
-    在此添加函数说明
+    将图中所有三元组按照时间存储到对应的tri_time[]内  例如a时间存在 b对c的三元组  则tri_time[a].add((b,c))
     '''
     time_num = 1
     #把出现的时间按顺序添加到Time里
@@ -307,7 +317,7 @@ def get_zitu(id):
 
 def filt_zitu(num):
     '''
-    在此添加函数说明
+    挑选路径中出现次数最多的num个实体，重新映射编号，将不在这num个实体的路径滤掉
     '''
     for item in Path:
         zitu_entity[item[1]] = zitu_entity.get(item[1], 0) + 1
