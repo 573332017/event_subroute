@@ -32,16 +32,25 @@ spec_path=set()
 add_path=set()
 PATH = "triples_zh_time/"
 FILE = "triples_zh_20_23.txt"
-EVENT_NAME = "莱猪"
+EVENT_NAME = "反美猪公投"
 ENT_NUM = 20
 FOCUS_ENT = "蔡英文"
+
+FOCUS_ENT_LIST = []
+with open('国际政治事件_frequency_10\反美猪公投\entities.txt', 'r', encoding='utf-8') as f:
+    for line in f:
+        if "Num_Entities" in line:
+            continue
+        else:
+            one_ent, _ = line.split(":")
+            FOCUS_ENT_LIST.append(one_ent)
 
 # FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 # '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
 # '中俄关系', '乌克兰', '唐纳德·特朗普']
 
-FOCUS_ENT_LIST = ['美国政府', '中国企业', '美国', '中国', '世界卫生组织', '小约翰·柯布', '吴部长',
- '台湾', '蔡英文总统', '民进党', '蔡英文', '马英九', '北京', '中共', '朝鲜战争']
+# FOCUS_ENT_LIST = ['美国政府', '中国企业', '美国', '中国', '世界卫生组织', '小约翰·柯布', '吴部长',
+#  '台湾', '蔡英文总统', '民进党', '蔡英文', '马英九', '北京', '中共', '朝鲜战争']
 
 def draw_lines_from_file(path,col):
     # 初始化空列表来存储坐标点
@@ -58,7 +67,7 @@ def draw_lines_from_file(path,col):
     r=v_time[len(v_time)-1]+1
     plt.plot([l, r], [ys_en[event_id], ys_en[event_id]], c='orange', linestyle='--')
     plt.yticks(list(y_list), y_label)
-    plt.title(EVENT_NAME + '_' + str(ys_en[event_id]))
+    plt.title(f'{EVENT_NAME}_event_{str(ys_en[event_id])}')
     #plt.savefig(event_name + '_' + str(ys_en[event_id]) + '.png')
     # 读取文件并解析每行数据
     for item in path:
@@ -91,8 +100,8 @@ def draw_lines_from_file(path,col):
     for point_pair in spec_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]],"r")
-    plt.savefig(PATH + EVENT_NAME + '_' + str(ys_en[event_id]) + '.png')
-    # plt.show()
+    plt.savefig(f'{PATH}{EVENT_NAME}_event_{str(ys_en[event_id])}.png')
+    plt.show()
 
 judge_edge_front={}
 judge_edge_back={}
@@ -111,8 +120,11 @@ def find_paths_back(time, current_edge, path):
                 judge_edge_back[next_edge] = True;
 
             # 按照边的形式输出 画图
-
+    tmp_path=[]
+    flag=False
     for edge in path:
+        if((edge[1]==focus_entity )or (edges[3]==focus_entity)): #如果该路径中包含蔡英文实体
+            flag=True
         Path.add(edge)
     cnt+=1
 
@@ -132,9 +144,12 @@ def find_paths_front(time, current_edge, path):
                 judge_edge_front[next_edge]=True;
 
     #按照边的形式输出 画图
-
+    tmp_path = []
+    flag = False
 
     for edge in path:
+        if ((edge[1] == entity["蔡英文"]) or (edges[3] == entity["蔡英文"])):  # 如果该路径中包含蔡英文实体
+            flag = True
         Path.add(edge)
     cnt+=1
     path.pop(0)
@@ -331,7 +346,7 @@ event_id=entity[EVENT_NAME]
 sorted_zitu=get_zitu(event_id)
 
 focus_entity=entity[FOCUS_ENT]
-focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST]
+focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST if e in entity.keys()]
 
 get_path(3)#获得子图路径
 ys_path=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径
