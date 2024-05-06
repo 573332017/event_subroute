@@ -43,13 +43,13 @@ cnt=0
 spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
-PATH = "台湾岛内政治事件_100/“台湾关系法”/"
-PATH_EXT="国际政治事件_frequency_10/“台湾关系法”/"
-FILE = "“台湾关系法”_30days.csv"
-EVENT_NAME = "《台湾关系法》"
-ENT_NUM = 20
-FOCUS_ENT = "美国"
-TIME_GRANULARITY = 15 # 时间粒度控制
+PATH = "国际政治事件_100_txt/亲美反共/"
+PATH_EXT="国际政治事件_frequency_10/亲美反共/"
+FILE = "亲美反共_30days.csv"
+EVENT_NAME = "亲美反共"
+ENT_NUM = 40
+FOCUS_ENT = "亲美反共"
+TIME_GRANULARITY = 5 # 时间粒度控制
 ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
@@ -258,7 +258,7 @@ def get_zitu_time(id):
 
         edges.setdefault(a, []).append((b, 0, res[2]))
         edges.setdefault(b, []).append((a, 1, res[2]))
-
+        zitu.append([Time[res[2]] - 1, a, Time[res[2]], b])
     # 举例: second_time=2020-01-01  ys_time[1]=2019-12-31
     second_time = dt.datetime.strptime(ys_Time[2], "%Y-%m-%d").date()
     ys_Time[1] = (second_time + dt.timedelta(days=-1)).strftime('%Y-%m-%d')
@@ -266,17 +266,17 @@ def get_zitu_time(id):
 
     #子图id
     item = id
-    for i in edges[item]:
-        if not i[1]: #item头实体
-            zitu.append([Time[i[2]]-1,item, Time[i[2]],i[0] ])
-        else:
-            zitu.append([Time[i[2]]-1,i[0],Time[i[2]],item ])
-         # 统计该子图下每个实体出现的数量
-        for j in edges[i[0]]:
-            if not j[1]: #i[0] 作为头实体
-                zitu.append([Time[j[2]]-1,i[0], Time[j[2]],j[0]])
-            else:
-                zitu.append([Time[j[2]]-1,j[0],Time[j[2]],i[0]])
+    # for i in edges[item]:
+    #     if not i[1]: #item头实体
+    #         zitu.append([Time[i[2]]-1,item, Time[i[2]],i[0] ])
+    #     else:
+    #         zitu.append([Time[i[2]]-1,i[0],Time[i[2]],item ])
+    #      # 统计该子图下每个实体出现的数量
+    #     for j in edges[i[0]]:
+    #         if not j[1]: #i[0] 作为头实体
+    #             zitu.append([Time[j[2]]-1,i[0], Time[j[2]],j[0]])
+    #         else:
+    #             zitu.append([Time[j[2]]-1,j[0],Time[j[2]],i[0]])
     unique_zitu = list(set(map(tuple, zitu)))
     sorted_zitu =sorted(unique_zitu, key=lambda x: x[0])
     return sorted_zitu
