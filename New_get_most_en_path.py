@@ -2,6 +2,8 @@
 该程序直接读取子图，并按照节点出现频率筛选并绘制路径
 '''
 import json
+import csv
+import os
 import matplotlib.pyplot as plt
 from pylab import mpl
 import datetime as dt
@@ -25,6 +27,8 @@ edges = {}
 #子图下某时间存在的三元组
 # tri_time=[set() for _ in range(N)]
 tri_time = {}
+ext_tri_time={}  #师兄新发的三元组 按照时间索引存储
+ext_tri_time_g={}
 fig, ax = plt.subplots(dpi=150, figsize=(24, 24))
 # 统计该子图下每个实体出现的数量
 zitu_entity = {}
@@ -37,10 +41,12 @@ y_label=[]
 value_time=set() #有效时间
 cnt=0
 spec_path=set()
-
-PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
-FILE = "change.txt"
-EVENT_NAME = "蔡英文过境窜美"
+ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
+ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
+PATH = "台湾岛内政治事件_100/“台湾关系法”/"
+PATH_EXT="国际政治事件_frequency_10/“台湾关系法”/"
+FILE = "“台湾关系法”_30days.csv"
+EVENT_NAME = "《台湾关系法》"
 ENT_NUM = 20
 FOCUS_ENT = "美国"
 TIME_GRANULARITY = 15 # 时间粒度控制
@@ -53,7 +59,7 @@ FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国
 # FOCUS_ENT_LIST = ['美国政府', '中国企业', '美国', '中国', '世界卫生组织', '小约翰·柯布', '吴部长',
 #  '台湾', '蔡英文总统', '民进党', '蔡英文', '马英九', '北京', '中共', '朝鲜战争']
 
-def draw_lines_from_file(path,s_path,col):
+def draw_lines_from_file(path,s_path,ext_path,flag,col):
     '''
     绘图函数
     '''
@@ -106,20 +112,33 @@ def draw_lines_from_file(path,s_path,col):
         plt.scatter(point_pair[0][0], point_pair[0][1], s=10, marker='o', c='red')
         plt.scatter(point_pair[1][0], point_pair[1][1], s=10, marker='o', c='red')
 
-    # 特殊画线的路径
-    spec_points = []
-    for item in s_path:
+    # 有关focus_entity的路径
+    # spec_points = []
+    # for item in s_path:
+    #     # 将两个点作为一个元组添加到列表中
+    #     # if (zitu_entity[item[1]] >= 3 and zitu_entity[item[3]] >= 3):  # 路径中该结点出现次数小于3 就滤掉
+    #     date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date() - start_time).days
+    #     date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
+    #     spec_points.append(((date1, item[1]), (date2, item[3])))
+    #     # spec_points.append(((item[0], ys_en[item[1]]), (item[2], ys_en[item[3]])))
+    # for point_pair in spec_points:
+    #     ax.plot([point_pair[0][0], point_pair[1][0]],
+    #             [point_pair[0][1], point_pair[1][1]], "r")
+
+    # 在师兄新给的三元组中出现过的路径
+    ext_points = []
+    for item in ext_path:
         # 将两个点作为一个元组添加到列表中
         # if (zitu_entity[item[1]] >= 3 and zitu_entity[item[3]] >= 3):  # 路径中该结点出现次数小于3 就滤掉
         date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date() - start_time).days
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
-        spec_points.append(((date1, item[1]), (date2, item[3])))
+        ext_points.append(((date1, item[1]), (date2, item[3])))
         # spec_points.append(((item[0], ys_en[item[1]]), (item[2], ys_en[item[3]])))
-    for point_pair in spec_points:
+    for point_pair in ext_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
-                [point_pair[0][1], point_pair[1][1]], "r")
-    plt.savefig(f'{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}.png')
-    print(f"路径绘制完成，保存为{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}.png")
+                [point_pair[0][1], point_pair[1][1]], "green")
+    plt.savefig(f'{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}_{flag}.png')
+    print(f"路径绘制完成，保存为{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}_{flag}.png")
     # plt.show()
 
 
@@ -162,7 +181,18 @@ def find_paths_back(current_time, current_edge, path,size):
             Path.add(edge)
             value_time.add(edge[0])
             value_time.add(edge[2])
-    cnt += 1
+
+            if edge[2] in ext_tri_time.keys():
+                tmp = ext_tri_time[edge[2]]
+                if (edge[1], edge[3]) in tmp:
+                    ext_Path.add(edge)
+
+            if edge[2] in ext_tri_time_g.keys():
+                tmp = ext_tri_time_g[edge[2]]
+                if (edge[1], edge[3]) in tmp:
+                    ext_Path_g.add(edge)
+
+        cnt += 1
     path.pop()
 
 def find_paths(edges, current_edge, path):
@@ -192,7 +222,7 @@ def find_paths(edges, current_edge, path):
 
     #按照边的形式输出
     flag=False
-    if len(path) >= 2:
+    if len(path) >= ROUTE_LEN:
         for edge in path:
             if ((edge[1] == ys_en[focus_entity]) or (edges[3] == ys_en[focus_entity])):  # 如果该路径中包含蔡英文实体
                 flag = True
@@ -200,6 +230,7 @@ def find_paths(edges, current_edge, path):
         if (flag == True):
             for edge in path:
                 spec_path.add(edge)  # 将该路径加入到特殊画线的spec_path中
+
 
     path.pop()
 
@@ -368,10 +399,66 @@ def read_txt(in_file):
     unique_tri =list(set(map(tuple, triple)))
     sorted_tri = sorted(unique_tri, key=last_element_sort)
     return sorted_tri
+def read_csv(in_file):
+    '''
+    读取文件
+    '''
+    triple=[]
+    en_num=0
+    with open(in_file,'r', encoding='utf-8') as file:
+        reader=csv.reader(file)
+        for elements in reader:
+            #elements = line.strip().split(",")
+            if(len(elements)>6) :continue
+            if (entity.get(elements[0]) == None):
+                entity[elements[0]] = en_num
+                fan_entity[en_num] = elements[0]
+                en_num += 1
+            if (entity.get(elements[3]) == None):
+                entity[elements[3]] = en_num
+                fan_entity[en_num] = elements[3]
+                en_num += 1
+            triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
+
+    unique_tri =list(set(map(tuple, triple)))
+    sorted_tri = sorted(unique_tri, key=last_element_sort)
+    return sorted_tri
+
+def get_ext():
+    # 遍历文件夹中的所有文件
+    for file_name in os.listdir(PATH_EXT):
+        if file_name.endswith('.csv') and not file_name.startswith('graph'):
+            # 构建CSV文件的完整路径
+            file_path = os.path.join(PATH_EXT, file_name)
+
+            # 打开CSV文件
+            with open(file_path, 'r', encoding='utf-8') as file:
+                # 创建CSV读取器
+                reader = csv.reader(file)
+
+                # 遍历每一行并输出
+                for row in reader:
+                    if entity[row[0]] not in ys_en or entity[row[3]] not in ys_en: continue
+                    ext_tri_time.setdefault(Time[row[5]],set()).add((ys_en[entity[row[0]]], ys_en[entity[row[3]]]))
+
+        if file_name.endswith('.csv') and file_name.startswith('graph'):
+            # 构建CSV文件的完整路径
+            file_path = os.path.join(PATH_EXT, file_name)
+
+            # 打开CSV文件
+            with open(file_path, 'r', encoding='utf-8') as file:
+                # 创建CSV读取器
+                reader = csv.reader(file)
+
+                # 遍历每一行并输出
+                for row in reader:
+                    ext_tri_time_g.setdefault(Time[row[5]],set()).add((entity[row[0]], entity[row[3]]))
+
 
 if __name__ == '__main__':
 
-    sorted_T = read_txt(PATH + FILE)
+    #sorted_T = read_txt(PATH + FILE)
+    sorted_T = read_csv(PATH + FILE)
     event_id = entity[EVENT_NAME]
     # sorted_zitu=get_zitu(event_id)
     sorted_zitu = get_zitu_time(event_id)
@@ -379,7 +466,10 @@ if __name__ == '__main__':
 
     focus_entity = entity[FOCUS_ENT]
     focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST if e in entity.keys()]
-
+    get_ext()
     get_path(TIME_GRANULARITY)# 获得子图路径
-    draw_lines_from_file(Path,spec_path,"b")
+
+    # flag =0 时 考虑以时间命名的csv文件  flag=1 时考虑以graphx命名的csv文件
+    draw_lines_from_file(Path,spec_path,ext_Path,0,"b")
+    draw_lines_from_file(Path, spec_path, ext_Path_g, 1, "b")
     print(f"共绘制{cnt}条路径")

@@ -15,3 +15,11 @@ New_get_most_path.py
 0429get_event_path.py
 
 修改了查找与focus_entity有关路径的方式，防止因剪枝而漏搜路径，但缺点是文件运行时间会变长，后续会想办法优化
+
+**2024/5/6**
+
+更新了New_get_event_path.py和New_get_most_en_path,py
+
+使得两个文件现在可以读取csv文件，并且将指定的csv文件中的三元组若在路径中出现，标记为绿色
+
+因为暂时用不到查找有关focus_entity的路径 所以将其注释掉，以提高代码运算速度
