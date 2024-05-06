@@ -1,5 +1,6 @@
-# 该程序分析时间分段数据，按照两跳生成事件子图，并筛选包含事件节点的路绘制路径
-
+'''
+该程序直接读取子图，并筛选包含事件节点的路绘制路径
+'''
 import json
 import matplotlib.pyplot as plt
 from pylab import mpl
@@ -9,7 +10,7 @@ from dateutil import parser
 from dateutil import rrule
 # 设置显示中文字体
 mpl.rcParams["font.sans-serif"] = ["SimHei"]
-N = 500000
+# N = 500000
 Time = {} #时间映射成数字
 ys_Time = {}#数字映射成时间
 
@@ -25,7 +26,8 @@ zitu_entity = {}
 # 子图下某个实体映射成的数字
 ys_en = {}
 #子图下某时间存在的三元组
-tri_time=[set() for _ in range(N)]
+# tri_time=[set() for _ in range(N)]
+tri_time = {}
 #判断某边已经被考虑过路径
 y_list=[]
 y_label=[]
@@ -40,6 +42,7 @@ FILE = "change.txt"
 EVENT_NAME = "反美猪公投"
 ENT_NUM = 20
 FOCUS_ENT = "蔡英文"
+TIME_GRANULARITY = 15
 
 # FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 # '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
@@ -49,25 +52,29 @@ FOCUS_ENT_LIST = ['美国', '中国' ]
 
 def draw_lines_from_file(path,s_path,col):
     if focus_entity not in ys_en:
-        print(f"以{r_size}天为关联时间下不存在 {FOCUS_ENT} 实体,请调整关联时间范围")
+        print(f"以{TIME_GRANULARITY}天为关联时间下不存在 {FOCUS_ENT} 实体,请调整关联时间范围")
         return
     # 初始化空列表来存储坐标点
     points = []
     label_list=[]
     v_time=list(value_time)
-    start_time = dt.datetime.strptime(ys_Time[v_time[0]], "%Y-%m-%d").date()
+    try:
+        start_time = dt.datetime.strptime(ys_Time[v_time[0]], "%Y-%m-%d").date()
+    except:
+        print("时间粒度太小，路径为空")
+        return
+
     end_time = dt.datetime.strptime(ys_Time[v_time[len(v_time)-1]], "%Y-%m-%d").date()
     Months = rrule.rrule(rrule.MONTHLY, dtstart=start_time, until=end_time).count()
     for i in range(0,Months+1,1):
         label_list.append((start_time+timedelta(days=30)*i).strftime("%Y-%m"))
-    #label_list = ["2020", "2021", "2022", "2023"]
     plt.xticks(range(0, (len(label_list)-1)*30+5, 30), label_list)
 
     l=0
     r = rrule.rrule(rrule.DAILY, dtstart=start_time, until=end_time).count()
     plt.plot([l, r], [ys_en[event_id], ys_en[event_id]], c='orange', linestyle='--')
     plt.yticks(list(y_list), y_label)
-    plt.title(EVENT_NAME + "_event_path_"  + str(ys_en[event_id])+'_'+str(r_size))
+    plt.title(EVENT_NAME + "_event_path_"  + str(ys_en[event_id])+'_'+str(TIME_GRANULARITY))
     #plt.savefig(event_name + '_' + str(ys_en[event_id]) + '.png')
     # 读取文件并解析每行数据
     for item in path:
@@ -76,14 +83,14 @@ def draw_lines_from_file(path,s_path,col):
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date()-start_time).days
         points.append(((date1, item[1]), (date2, item[3])))
     for values in y_list:
-        if(values==ys_en[event_id]):
-            plt.plot([l, r], [values,values], c='red', linestyle='--')
+        # 普通节点不再通过虚线标识，只标识关注的实体节点
+        if (values == ys_en[event_id]):
+            plt.plot([l, r], [values, values], c='red', linestyle='--')
+        elif (values == ys_en[focus_entity]):
+            plt.plot([l, r], [values, values], c='green', linestyle='--')
         elif (values in [ys_en[e] for e in focus_entity_list if e in ys_en.keys()]):
             plt.plot([l, r], [values, values], c='black', linestyle='--')
-        elif (values==ys_en[focus_entity]):
-            plt.plot([l, r], [values,values], c='green', linestyle='--')
-        else:
-             plt.plot([l, r], [values, values], c='black', linestyle='--')
+            
     # 遍历所有点对，绘制线条
     for point_pair in points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
@@ -105,7 +112,9 @@ def draw_lines_from_file(path,s_path,col):
     for point_pair in spec_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]],"r")
-    plt.savefig(PATH + EVENT_NAME + "_event_path_" + str(ys_en[event_id]) +'_'+str(r_size)+'.png')
+
+    plt.savefig(f'{PATH}{EVENT_NAME}_event-contained_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}.png')
+    print(f"路径绘制完成，保存为{PATH}{EVENT_NAME}_event-contained_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}.png")
     # plt.show()
 
 judge_edge_front={}
@@ -125,9 +134,11 @@ def find_paths_back(current_time, current_edge, path,size):
         # （2）计算两个日期date的天数差
         Days = (date2 - date1).days
         if(Days>size): continue; #日期相差超过要求 就不考虑
-        for t in tri_time[current_time+i]:
-            if current_en==t[0]:
-                next_edges.append((current_time,t[0],current_time+i,t[1]))
+
+        if current_time+i in tri_time.keys(): #如果时间点内存在三元组才进一步处理
+            for t in tri_time[current_time+i]:
+                if current_en==t[0]:
+                    next_edges.append((current_time,t[0],current_time+i,t[1]))
 
     if len(next_edges) > 0:
         for next_edge in next_edges:
@@ -157,9 +168,11 @@ def find_paths_front(current_time, current_edge, path,size):
         # 计算两个日期date的天数差
         Days = (date1 - date2).days
         if (Days > size): continue;  # 日期相差超过要求 就不考虑
-        for t in tri_time[current_time -i]:
-            if current_en == t[1]:
-                next_edges.append((current_time- i, t[0], current_time, t[1]))
+
+        if current_time-i in tri_time.keys(): #如果时间点内存在三元组才进一步处理
+            for t in tri_time[current_time -i]:
+                if current_en == t[1]:
+                    next_edges.append((current_time- i, t[0], current_time, t[1]))
 
     if len(next_edges) > 0:
         for next_edge in next_edges:
@@ -216,7 +229,9 @@ def get_path(size):
         #find_paths(F_zitu, edge, path)
 
 def get_zitu(id):
-
+    '''
+    在此添加函数说明
+    '''
     time_num = 1
     #把出现的时间按顺序添加到Time里
     for res in sorted_T:
@@ -235,15 +250,18 @@ def get_zitu(id):
         elif (b==event_id):
             edges.add((a, 1, res[2]))
         # zitu.append([start_time, a, res[2], b])
-        tri_time[Time[res[2]]].add((a, b))
+        # tri_time[Time[res[2]]].add((a, b))
+        tri_time.setdefault(Time[res[2]],set()).add((a, b))
+
     #举例: second_time=(2018, 1, 6)
     second_time = dt.datetime.strptime(ys_Time[2] , "%Y-%m-%d").date()
     ys_Time[1]=(second_time+dt.timedelta(days=-1)).strftime('%Y-%m-%d')
     Time[ys_Time[1]] = 1
 
-
 def filt_zitu(num):
-
+    '''
+    在此添加函数说明
+    '''
     for item in Path:
         zitu_entity[item[1]] = zitu_entity.get(item[1], 0) + 1
         zitu_entity[item[3]] = zitu_entity.get(item[3], 0) + 1
@@ -313,14 +331,11 @@ def filt_zitu(num):
             y_list.append(ys_en[i])
             y_label.append(fan_entity[i])
 
-
-
     for item in Path:
         if item[1] not in ys_en or item[3] not in ys_en: continue #路径中结点不再出现最多的num个实体内 就滤掉
         a=ys_en[item[1]]
         b=ys_en[item[3]]  #统计每个三元组的头尾实体映射id
         ys_path.append((item[0],a,item[2],b))
-
 
     for item in spec_path:
         if item[1] not in ys_en or item[3] not in ys_en: continue  # 路径中结点不再出现最多的num个实体内 就滤掉
@@ -338,6 +353,9 @@ x_data = []
 y_data = []
 
 def read_txt(in_file):
+    '''
+    读取文件
+    '''
     triple=[]
     en_num=0
     with open(in_file,'r', encoding='utf-8') as file:
@@ -354,30 +372,21 @@ def read_txt(in_file):
                 en_num += 1
             triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
 
-
     unique_tri =list(set(map(tuple, triple)))
     sorted_tri = sorted(unique_tri, key=last_element_sort)
     return sorted_tri
 
-#sorted_T=read_json()
-#event=read_txt_event("event0_time.txt")
-sorted_T=read_txt(PATH + FILE)
+if __name__ == '__main__':
 
+    sorted_T=read_txt(PATH + FILE)
+    event_id=entity[EVENT_NAME]
+    get_zitu(event_id)
 
-event_id=entity[EVENT_NAME]
-get_zitu(event_id)
+    focus_entity=entity[FOCUS_ENT]
+    focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST]
 
-focus_entity=entity[FOCUS_ENT]
-focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST]
-r_size=15 #限制范围
-get_path(r_size)#获得子图路径 限制范围
-ys_path,ys_spec_path=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径
-print(cnt)
+    get_path(TIME_GRANULARITY)#获得子图路径 限制范围
+    ys_path,ys_spec_path=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径
 
-draw_lines_from_file(ys_path,ys_spec_path,"b")
-# sorted_zitu=get_zitu(11208) #json
-
-
-# 调用函数进行处理
-#get_y_data("ys_node_92_20.txt")
-#process_path_file("output_282.json")
+    draw_lines_from_file(ys_path,ys_spec_path,"b")
+    print(f"共绘制{cnt}条路径")

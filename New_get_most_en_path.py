@@ -1,5 +1,6 @@
-# 该程序为分析分段数据，按照两跳生成事件子图，并按照实体出现频率绘制路径
-
+'''
+该程序直接读取子图，并按照节点出现频率筛选并绘制路径
+'''
 import json
 import matplotlib.pyplot as plt
 from pylab import mpl
@@ -9,7 +10,7 @@ from dateutil import parser
 from dateutil import rrule
 # 设置显示中文字体
 mpl.rcParams["font.sans-serif"] = ["SimHei"]
-N = 500000
+# N = 500000
 Time = {} #时间映射成数字
 ys_Time = {}#数字映射成时间
 zitu = []
@@ -19,9 +20,11 @@ entity = {}
 fan_entity={} #反向 数字-》实体
 zitu_path=[]#子图路径按路径输出
 Path=set()#子图路径按边输出
-edges = [[] for _ in range(N)]#总图的所有边
+# edges = [[] for _ in range(N)]#总图的所有边
+edges = {}
 #子图下某时间存在的三元组
-tri_time=[set() for _ in range(N)]
+# tri_time=[set() for _ in range(N)]
+tri_time = {}
 fig, ax = plt.subplots(dpi=150, figsize=(24, 24))
 # 统计该子图下每个实体出现的数量
 zitu_entity = {}
@@ -35,11 +38,13 @@ value_time=set() #有效时间
 cnt=0
 spec_path=set()
 
-PATH = "台湾岛内政治事件_100/反美猪公投/"
+PATH = "国际政治事件_100_txt/蔡英文“过境”窜美/"
 FILE = "change.txt"
-EVENT_NAME = "反美猪公投"
+EVENT_NAME = "蔡英文过境窜美"
 ENT_NUM = 20
 FOCUS_ENT = "美国"
+TIME_GRANULARITY = 15 # 时间粒度控制
+ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
@@ -49,27 +54,34 @@ FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国
 #  '台湾', '蔡英文总统', '民进党', '蔡英文', '马英九', '北京', '中共', '朝鲜战争']
 
 def draw_lines_from_file(path,s_path,col):
+    '''
+    绘图函数
+    '''
     if focus_entity not in ys_en:
-        print(f"以{r_size}天为关联时间下不存在 {FOCUS_ENT} 实体,请调整关联时间范围")
+        print(f"以{TIME_GRANULARITY}天为关联时间下不存在 {FOCUS_ENT} 实体,请调整关联时间范围")
         return
     # 初始化空列表来存储坐标点
     points = []
     label_list = []
     v_time = list(value_time)
-    start_time = dt.datetime.strptime(ys_Time[v_time[0]], "%Y-%m-%d").date()
+    try:
+        start_time = dt.datetime.strptime(ys_Time[v_time[0]], "%Y-%m-%d").date()
+    except:
+        print("时间粒度太小，路径为空")
+        return
+    
     end_time = dt.datetime.strptime(ys_Time[v_time[len(v_time) - 1]], "%Y-%m-%d").date()
     Months = rrule.rrule(rrule.MONTHLY, dtstart=start_time, until=end_time).count()
     for i in range(0, Months + 1, 1):
         label_list.append((start_time + timedelta(days=30) * i).strftime("%Y-%m"))
-    # label_list = ["2020", "2021", "2022", "2023"]
     plt.xticks(range(0, (len(label_list) - 1) * 30 + 5, 30), label_list)
 
     l = 0
     r = rrule.rrule(rrule.DAILY, dtstart=start_time, until=end_time).count()
     plt.plot([l, r], [ys_en[event_id], ys_en[event_id]], c='orange', linestyle='--')
     plt.yticks(list(y_list), y_label)
-    plt.title(EVENT_NAME + "_most_en_" + str(ys_en[event_id]) + '_' + str(r_size))
-    # plt.savefig(event_name + '_' + str(ys_en[event_id]) + '.png')
+    plt.title(EVENT_NAME + "_frequency_" + str(ys_en[event_id]) + '_' + str(TIME_GRANULARITY))
+
     # 读取文件并解析每行数据
     for item in path:
         # 将两个点作为一个元组添加到列表中
@@ -77,14 +89,14 @@ def draw_lines_from_file(path,s_path,col):
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
         points.append(((date1, item[1]), (date2, item[3])))
     for values in y_list:
+        # 普通节点不再通过虚线标识，只标识关注的实体节点
         if (values == ys_en[event_id]):
             plt.plot([l, r], [values, values], c='red', linestyle='--')
-        # elif (values in [ys_en[e] for e in focus_entity_list if e in ys_en.keys()]):
-        #     plt.plot([l, r], [values, values], c='black', linestyle='--')
         elif (values == ys_en[focus_entity]):
             plt.plot([l, r], [values, values], c='green', linestyle='--')
-        else:
+        elif (values in [ys_en[e] for e in focus_entity_list if e in ys_en.keys()]):
             plt.plot([l, r], [values, values], c='black', linestyle='--')
+
     # 遍历所有点对，绘制线条
     for point_pair in points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
@@ -106,11 +118,15 @@ def draw_lines_from_file(path,s_path,col):
     for point_pair in spec_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]], "r")
-    plt.savefig(PATH + EVENT_NAME + "_most_en_" + str(ys_en[event_id]) + '_' + str(r_size) + '.png')
+    plt.savefig(f'{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}.png')
+    print(f"路径绘制完成，保存为{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}.png")
     # plt.show()
 
 
 def find_paths_back(current_time, current_edge, path,size):
+    '''
+    寻找后向路径
+    '''
     path.append(current_edge)
     global cnt
     current_en = current_edge[3]
@@ -125,37 +141,35 @@ def find_paths_back(current_time, current_edge, path,size):
         # （2）计算两个日期date的天数差
         Days = (date2 - date1).days
         if(Days>size): continue; #日期相差超过要求 就不考虑
-        for t in tri_time[current_time+i]:
-            if current_en==t[0]:
-                next_edges.append((current_time,t[0],current_time+i,t[1]))
+
+        if current_time+i in tri_time.keys(): #如果时间点内存在三元组才进一步处理
+            for t in tri_time[current_time+i]:
+                if current_en==t[0]:
+                    next_edges.append((current_time,t[0],current_time+i,t[1]))
+
 
     if len(next_edges) > 0:
         for next_edge in next_edges:
             if judge_edge_back.get(next_edge) == None:  # 这条边没有考虑过路径
                 find_paths_back(next_edge[2], next_edge, path,size)
-                judge_edge_back[next_edge] = True;
+                judge_edge_back[next_edge] = True
             else:
                 path.append(next_edge)
 
     # 按照边的形式输出
-    flag = False;
-    if len(path) >= 2:
+    if len(path) >= ROUTE_LEN:
         for edge in path:
-            if ((edge[1] == ys_en[focus_entity]) or (edges[3] == ys_en[focus_entity]) or (edge in judge_edge_back and judge_edge_back[edge]=="spec" )):  # 如果该路径中包含蔡英文实体
-                flag = True;
             Path.add(edge)
             value_time.add(edge[0])
             value_time.add(edge[2])
-        if (flag == True):
-            for edge in path:
-                judge_edge_back[edge] = "spec"
-                spec_path.add(edge)  # 将该路径加入到特殊画线的spec_path中
     cnt += 1
-
     path.pop()
-def find_paths(edges, current_edge, path):
-    path.append(current_edge)
 
+def find_paths(edges, current_edge, path):
+    '''
+    可在此添加函数说明
+    '''
+    path.append(current_edge)
     current_x = current_edge[2]
     current_y = current_edge[3]
 
@@ -164,7 +178,7 @@ def find_paths(edges, current_edge, path):
         for next_edge in next_edges:
             if(edge_has_path.get(next_edge)==None): #这条边的路径还没有找过
                 find_paths(edges, next_edge, path)
-                edge_has_path[next_edge]=True;
+                edge_has_path[next_edge]=True
             else:
                 path.append(next_edge)
     #按照路径形式输出 json要求
@@ -177,11 +191,11 @@ def find_paths(edges, current_edge, path):
     #     zitu_path.append(Path)
 
     #按照边的形式输出
-    flag=False;
+    flag=False
     if len(path) >= 2:
         for edge in path:
             if ((edge[1] == ys_en[focus_entity]) or (edges[3] == ys_en[focus_entity])):  # 如果该路径中包含蔡英文实体
-                flag = True;
+                flag = True
             Path.add(edge)
         if (flag == True):
             for edge in path:
@@ -190,25 +204,29 @@ def find_paths(edges, current_edge, path):
     path.pop()
 
 def get_path(size):
+    '''
+    在此添加函数说明
+    '''
     for edge in F_zitu:
         path = []
         #find_paths(F_zitu, edge, path)
         find_paths_back(edge[2],edge,path,size)
 
 def get_zitu_time(id):
-
+    '''
+    在此添加函数说明
+    '''
     time_num = 1
     for res in sorted_T:
         if res[2] not in Time:
             time_num += 1
             ys_Time[time_num] = res[2]
             Time[res[2]] = time_num
-            x_data.append(res[2])
         a = int(res[0])
         b = int(res[1])
 
-        edges[a].append([b, 0, res[2]])
-        edges[b].append([a, 1, res[2]])
+        edges.setdefault(a, []).append((b, 0, res[2]))
+        edges.setdefault(b, []).append((a, 1, res[2]))
 
     # 举例: second_time=2020-01-01  ys_time[1]=2019-12-31
     second_time = dt.datetime.strptime(ys_Time[2], "%Y-%m-%d").date()
@@ -217,7 +235,6 @@ def get_zitu_time(id):
 
     #子图id
     item = id
-
     for i in edges[item]:
         if not i[1]: #item头实体
             zitu.append([Time[i[2]]-1,item, Time[i[2]],i[0] ])
@@ -234,7 +251,9 @@ def get_zitu_time(id):
     return sorted_zitu
 
 def filt_zitu(num):
-
+    '''
+    在此添加函数说明
+    '''
     for item in sorted_zitu:
         zitu_entity[item[1]] = zitu_entity.get(item[1], 0) + 1
         zitu_entity[item[3]] = zitu_entity.get(item[3], 0) + 1
@@ -312,18 +331,22 @@ def filt_zitu(num):
         b=ys_en[item[3]]  #统计每个三元组的头尾实体映射id
         #if((a>=down and a<=up and b>=down and b<=up) or num>1e7):
         F_zitu.append((item[0],a,item[2],b))
-        tri_time[item[2]].add((a, b))
+        # tri_time[item[2]].add((a, b))
+        tri_time.setdefault(item[2],set()).add((a, b))
 
     return F_zitu
 
 # 调用函数进行读取JSON文件
 def last_element_sort(elem):
+    '''
+    在此添加函数说明
+    '''
     return elem[-1]
 
-x_data = []
-y_data = []
-
 def read_txt(in_file):
+    '''
+    读取文件
+    '''
     triple=[]
     en_num=0
     # with open("time.txt", 'w', encoding='utf-8') as output_file:
@@ -346,25 +369,17 @@ def read_txt(in_file):
     sorted_tri = sorted(unique_tri, key=last_element_sort)
     return sorted_tri
 
-#sorted_T=read_json()
-#event=read_txt_event("event0_time.txt")
-sorted_T = read_txt(PATH + FILE)
+if __name__ == '__main__':
 
+    sorted_T = read_txt(PATH + FILE)
+    event_id = entity[EVENT_NAME]
+    # sorted_zitu=get_zitu(event_id)
+    sorted_zitu = get_zitu_time(event_id)
+    F_zitu=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径
 
-event_id = entity[EVENT_NAME]
-# sorted_zitu=get_zitu(event_id)
-sorted_zitu = get_zitu_time(event_id)
-F_zitu=filt_zitu(ENT_NUM) #控制子图中包含的实体数量 若输入大于1e7 则查看所有实体的路径
-focus_entity = entity[FOCUS_ENT]
+    focus_entity = entity[FOCUS_ENT]
+    focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST if e in entity.keys()]
 
-#focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST]
-r_size=15 #关联时间
-get_path(r_size)#获得子图路径
-
-draw_lines_from_file(Path,spec_path,"b")
-#sorted_zitu=get_zitu(11208) #json
-
-
-# 调用函数进行处理
-#get_y_data("ys_node_92_20.txt")
-#process_path_file("output_282.json")
+    get_path(TIME_GRANULARITY)# 获得子图路径
+    draw_lines_from_file(Path,spec_path,"b")
+    print(f"共绘制{cnt}条路径")
