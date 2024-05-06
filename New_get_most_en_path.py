@@ -328,19 +328,21 @@ def filt_zitu(num):
     F_zitu = []
      # 事件不再出现最多的num个实体内 事件实体重新映射
     if (event_id not in num_en):
-        ys_en[event_id] = up + 1
+        ext = 0
+        while (up + ext in ys_en.values()):
+            ext+=1
+        ys_en[event_id] = up + ext
         num_en.append(event_id)
-        ext = 1
         # 把一跳子图的所有边加入路径考虑中
         if (num <= 1e7):
             # 实体重新映射
             for i in edges[event_id]:
                 if (i[0] not in num_en):
-                    while (up + ext in y_list):
+                    while (up + ext in ys_en.values()):
                         ext += 1
                     ys_en[i[0]] = up + ext
                     num_en.append(i[0])
-                    ext += 1
+
         #一跳子图的所有边直接加入路径中
         if not i[1]:  # event作为头实体
             Path.add((Time[i[2]] - 1, up + 1, Time[i[2]], ys_en[i[0]]))
@@ -452,7 +454,10 @@ def get_ext():
 
                 # 遍历每一行并输出
                 for row in reader:
-                    ext_tri_time_g.setdefault(Time[row[5]],set()).add((entity[row[0]], entity[row[3]]))
+                    if entity[row[0]] not in ys_en or entity[row[3]] not in ys_en: continue
+                    a = ys_en[entity[row[0]]]
+                    b = ys_en[entity[row[3]]]  # 统计每个三元组的头尾实体映射id
+                    ext_tri_time_g.setdefault(Time[row[5]],set()).add((a, b))
 
 
 if __name__ == '__main__':
