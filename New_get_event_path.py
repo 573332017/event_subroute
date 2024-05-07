@@ -45,7 +45,7 @@ ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的�
 ext_tri_time={}
 ext_tri_time_g={}
 # PATH = "“台湾关系法”/"
-
+MAX_RANGE=20 #设定画图时某边出现次数上限 如果次数超过max就设定为max max时即为红色
 PATH = "国际政治事件_100_txt/亲美反共/"
 PATH_EXT="国际政治事件_frequency_10/亲美反共/"
 FILE = "亲美反共_30days.csv"
@@ -76,7 +76,7 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     except:
         print("时间粒度太小，路径为空")
         return
-    weights = np.linspace(0, 1, 20)  # 权重值，范围从 0 到 1
+    weights = np.linspace(0, 1, MAX_RANGE)  # 权重值，范围从 0 到 1
     # 设置颜色映射
     cmap = plt.cm.get_cmap('coolwarm')
     end_time = dt.datetime.strptime(ys_Time[v_time[len(v_time)-1]], "%Y-%m-%d").date()
@@ -108,7 +108,7 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
             
     # 遍历所有点对，绘制线条
     for point_pair in points:
-        if point_pair[2]>20: point_pair[2]=20
+        if point_pair[2]>=MAX_RANGE: point_pair[2]=MAX_RANGE-1
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]],color = cmap(weights[point_pair[2]]))
 

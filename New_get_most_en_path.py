@@ -124,7 +124,7 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     # 遍历所有点对，绘制线条
     for point_pair in points:
 
-        if point_pair[2] > 20: point_pair[2] = 20
+        if point_pair[2] >= MAX_RANGE: point_pair[2] = MAX_RANGE-1
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]], color = cmap(weights[point_pair[2]]))
         # plt.draw()
