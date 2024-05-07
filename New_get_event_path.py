@@ -223,7 +223,7 @@ def find_paths_front(current_time, current_edge, path,size):
         for next_edge in next_edges:
             if judge_edge_front.get(next_edge)==None : #这条边没有考虑过路径
                 find_paths_front(next_edge[0], next_edge, path,size)
-                judge_edge_front[next_edge]=True;
+                judge_edge_front[next_edge]=True
 
     #按照边的形式输出 画图
 

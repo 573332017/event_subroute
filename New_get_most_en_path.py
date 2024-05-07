@@ -10,6 +10,8 @@ import datetime as dt
 from datetime import timedelta
 from dateutil import parser
 from dateutil import rrule
+import time
+
 # 设置显示中文字体
 mpl.rcParams["font.sans-serif"] = ["SimHei"]
 # N = 500000
@@ -29,7 +31,7 @@ edges = {}
 tri_time = {}
 ext_tri_time={}  #师兄新发的三元组 按照时间索引存储
 ext_tri_time_g={}
-fig, ax = plt.subplots(dpi=150, figsize=(24, 24))
+fig, ax = plt.subplots(dpi=150, figsize=(24, 32))
 # 统计该子图下每个实体出现的数量
 zitu_entity = {}
 # 子图下某个实体映射成的数字
@@ -43,15 +45,24 @@ cnt=0
 spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
-PATH = "国际政治事件_100_txt/亲美反共/"
-PATH_EXT="国际政治事件_frequency_10/亲美反共/"
-FILE = "亲美反共_30days.csv"
-EVENT_NAME = "亲美反共"
-AIM_NAME="民进党当局"
-ENT_NUM = 20
-FOCUS_ENT = "亲美反共"
+
+TMP_NAME = "倚美谋独"
+PATH = f"国际政治事件_frequency_10/{TMP_NAME}/"
+PATH_EXT=f"国际政治事件_frequency_10/{TMP_NAME}/"
+FILE = "graph0.csv"
+EVENT_NAME = "蔡英文"
+AIM_NAME= "蔡英文"
+ENT_NUM = 40
+FOCUS_ENT = "蔡英文"
 TIME_GRANULARITY = 5 # 时间粒度控制
-ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
+ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
+
+# 设定读取的三元组时间范围，因为有些事件的时间跨度较大，不便展示
+S_TIME = '1000-01-01' # 不限时间范围
+E_TIME = '3000-01-01'
+
+# S_TIME = '2017-01-01'
+# E_TIME = '2023-01-01'
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
@@ -87,7 +98,7 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     r = rrule.rrule(rrule.DAILY, dtstart=start_time, until=end_time).count()
     plt.plot([l, r], [ys_en[event_id], ys_en[event_id]], c='orange', linestyle='--')
     plt.yticks(list(y_list), y_label)
-    plt.title(EVENT_NAME + "_frequency_" + str(ys_en[event_id]) + '_' + str(TIME_GRANULARITY))
+    plt.title(TMP_NAME + "_frequency_" + str(ys_en[event_id]) + '_' + str(TIME_GRANULARITY))
 
     # 读取文件并解析每行数据
     for item in path:
@@ -96,13 +107,15 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
         points.append(((date1, item[1]), (date2, item[3])))
     for values in y_list:
-        # 普通节点不再通过虚线标识，只标识关注的实体节点
+        # 普通节点不再通过虚线标识，只标识目标事件实体和关注的实体
         if (values == ys_en[event_id]):
             plt.plot([l, r], [values, values], c='red', linestyle='--')
-        elif (values == ys_en[focus_entity]):
-            plt.plot([l, r], [values, values], c='green', linestyle='--')
-        elif (values in [ys_en[e] for e in focus_entity_list if e in ys_en.keys()]):
+        elif (values == ys_en[aim_id]):
             plt.plot([l, r], [values, values], c='black', linestyle='--')
+        # elif (values == ys_en[focus_entity]):
+        #     plt.plot([l, r], [values, values], c='green', linestyle='--')
+        # elif (values in [ys_en[e] for e in focus_entity_list if e in ys_en.keys()]):
+        #     plt.plot([l, r], [values, values], c='black', linestyle='--')
 
     # 遍历所有点对，绘制线条
     for point_pair in points:
@@ -138,8 +151,8 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     for point_pair in ext_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]], "green")
-    plt.savefig(f'{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}_{flag}.png')
-    print(f"路径绘制完成，保存为{PATH}{EVENT_NAME}_frequency_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}_{flag}.png")
+    plt.savefig(f'{PATH}{TMP_NAME}_frequency_eventid{str(ys_en[event_id])}_{S_TIME}_{E_TIME}_time{str(TIME_GRANULARITY)}_{flag}.png')
+    print(f"路径绘制完成，保存为{PATH}{TMP_NAME}_frequency_eventid{str(ys_en[event_id])}_{S_TIME}_{E_TIME}_time{str(TIME_GRANULARITY)}_{flag}.png")
     # plt.show()
 
 
@@ -435,7 +448,10 @@ def read_csv(in_file):
                 entity[elements[3]] = en_num
                 fan_entity[en_num] = elements[3]
                 en_num += 1
-            triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
+            
+            time_data = dt.datetime.strptime(elements[5], "%Y-%m-%d").date()
+            if time_data >= dt.datetime.strptime(S_TIME, "%Y-%m-%d").date() and time_data <= dt.datetime.strptime(E_TIME, "%Y-%m-%d").date():
+                triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
 
     unique_tri =list(set(map(tuple, triple)))
     sorted_tri = sorted(unique_tri, key=last_element_sort)
@@ -455,8 +471,10 @@ def get_ext():
 
                 # 遍历每一行并输出
                 for row in reader:
-                    if entity[row[0]] not in ys_en or entity[row[3]] not in ys_en: continue
-                    ext_tri_time.setdefault(Time[row[5]],set()).add((ys_en[entity[row[0]]], ys_en[entity[row[3]]]))
+                    if row[0] in entity.keys() and row[3] in entity.keys():
+                        if entity[row[0]] not in ys_en or entity[row[3]] not in ys_en: continue
+                        if row[5] in Time.keys():
+                            ext_tri_time.setdefault(Time[row[5]],set()).add((ys_en[entity[row[0]]], ys_en[entity[row[3]]]))
 
         if file_name.endswith('.csv') and file_name.startswith('graph'):
             # 构建CSV文件的完整路径
@@ -469,10 +487,12 @@ def get_ext():
 
                 # 遍历每一行并输出
                 for row in reader:
-                    if entity[row[0]] not in ys_en or entity[row[3]] not in ys_en: continue
-                    a = ys_en[entity[row[0]]]
-                    b = ys_en[entity[row[3]]]  # 统计每个三元组的头尾实体映射id
-                    ext_tri_time_g.setdefault(Time[row[5]],set()).add((a, b))
+                    if row[0] in entity.keys() and row[3] in entity.keys():
+                        if entity[row[0]] not in ys_en or entity[row[3]] not in ys_en: continue
+                        a = ys_en[entity[row[0]]]
+                        b = ys_en[entity[row[3]]]  # 统计每个三元组的头尾实体映射id
+                        if row[5] in Time.keys():
+                            ext_tri_time_g.setdefault(Time[row[5]],set()).add((a, b))
 
 
 if __name__ == '__main__':
@@ -492,5 +512,5 @@ if __name__ == '__main__':
 
     # flag =0 时 考虑以时间命名的csv文件  flag=1 时考虑以graphx命名的csv文件
     draw_lines_from_file(Path,spec_path,ext_Path,0,"b")
-    draw_lines_from_file(Path, spec_path, ext_Path_g, 1, "b")
+    # draw_lines_from_file(Path, spec_path, ext_Path_g, 1, "b")
     print(f"共绘制{cnt}条路径")
