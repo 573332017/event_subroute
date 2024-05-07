@@ -47,17 +47,17 @@ cnt=0
 spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
-
+Tri_cnt={}
 TMP_NAME = "反美猪公投"
 PATH = f"国际政治事件_frequency_10/{TMP_NAME}/"
 PATH_EXT=f"国际政治事件_frequency_10/{TMP_NAME}/"
 FILE = "反美猪公投_30days.csv"
 EVENT_NAME = "反莱猪公投"
 AIM_NAME= "反莱猪公投"
-ENT_NUM = 40
+ENT_NUM = 20
 FOCUS_ENT = "反莱猪公投"
 TIME_GRANULARITY = 5 # 时间粒度控制
-ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
+ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
 
 # 设定读取的三元组时间范围，因为有些事件的时间跨度较大，不便展示
 S_TIME = '1000-01-01' # 不限时间范围
@@ -109,7 +109,8 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
         # 将两个点作为一个元组添加到列表中
         date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date() - start_time).days
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
-        points.append([(date1, item[1]), (date2, item[3]),path[item]])
+        #points.append([(date1, item[1]), (date2, item[3]),path[item]]) #以该边在路径中出现次数作为颜色标准
+        points.append([(date1, item[1]), (date2, item[3]), item[4]])  # 以该边在原图中出现次数作为颜色标准
     for values in y_list:
         # 普通节点不再通过虚线标识，只标识目标事件实体和关注的实体
         if (values == ys_en[event_id]):
@@ -184,7 +185,7 @@ def find_paths_back(current_time, current_edge, path,size):
         if current_time+i in tri_time.keys(): #如果时间点内存在三元组才进一步处理
             for t in tri_time[current_time+i]:
                 if current_en==t[0]:
-                    next_edges.append((current_time,t[0],current_time+i,t[1]))
+                    next_edges.append((current_time,t[0],current_time+i,t[1],t[2]))
 
 
     if len(next_edges) > 0:
@@ -381,20 +382,24 @@ def filt_zitu(num):
                     num_en.append(i[0])
                     # 一跳子图的所有边直接加入路径中
                 if not i[1]:  # event作为头实体
+                    #计算该边在原图中出现次数
+                    d = Tri_cnt[(event_id, i[0], i[2])]
                     try:
                         # 尝试对键为 edge 的值进行递增操作
-                        Path[(Time[i[2]] - 1, ys_en[event_id], Time[i[2]], ys_en[i[0]])] += 1
+                        Path[(Time[i[2]] - 1, ys_en[event_id], Time[i[2]], ys_en[i[0]],d)] += 1
                     except KeyError:
                         # 键不存在时的处理逻辑
-                        Path[(Time[i[2]] - 1, ys_en[event_id], Time[i[2]], ys_en[i[0]])] = 1
+                        Path[(Time[i[2]] - 1, ys_en[event_id], Time[i[2]], ys_en[i[0]],d)] = 1
                     #Path.add((Time[i[2]] - 1, ys_en[event_id], Time[i[2]], ys_en[i[0]]))
                 else:
+                    # 计算该边在原图中出现次数
+                    d = Tri_cnt[(i[0], event_id, i[2])]
                     try:
                         # 尝试对键为 edge 的值进行递增操作
-                        Path[(Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], ys_en[event_id])] += 1
+                        Path[(Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], ys_en[event_id],d)] += 1
                     except KeyError:
                         # 键不存在时的处理逻辑
-                        Path[(Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], ys_en[event_id])] = 1
+                        Path[(Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], ys_en[event_id],d)] = 1
                     #Path.add((Time[i[2]] - 1, ys_en[i[0]], Time[i[2]], ys_en[event_id]))
 
     # 目标实体不在出现最多的num个实体内 目标实体重新映射
@@ -419,9 +424,11 @@ def filt_zitu(num):
         a=ys_en[item[1]]
         b=ys_en[item[3]]  #统计每个三元组的头尾实体映射id
         #if((a>=down and a<=up and b>=down and b<=up) or num>1e7):
-        F_zitu.append((item[0],a,item[2],b))
+        d=Tri_cnt[(item[1], item[3], ys_Time[item[2]])]
+        F_zitu.append((item[0],a,item[2],b,d))
         # tri_time[item[2]].add((a, b))
-        tri_time.setdefault(item[2],set()).add((a, b))
+        # tri_time.setdefault(item[2],set()).add((a, b))
+        tri_time.setdefault(item[2], set()).add((a, b, d))
 
     return F_zitu
 
@@ -480,7 +487,13 @@ def read_csv(in_file):
             time_data = dt.datetime.strptime(elements[5], "%Y-%m-%d").date()
             if time_data >= dt.datetime.strptime(S_TIME, "%Y-%m-%d").date() and time_data <= dt.datetime.strptime(E_TIME, "%Y-%m-%d").date():
                 triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
-
+            # 统计某个（头实体，尾实体，时间）的出现次数
+            try:
+                # 尝试对键为 edge 的值进行递增操作
+                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] += 1
+            except KeyError:
+                # 键不存在时的处理逻辑
+                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] = 1
     unique_tri =list(set(map(tuple, triple)))
     sorted_tri = sorted(unique_tri, key=last_element_sort)
     return sorted_tri

@@ -45,7 +45,7 @@ ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的�
 ext_tri_time={}
 ext_tri_time_g={}
 # PATH = "“台湾关系法”/"
-MAX_RANGE=20 #设定画图时某边出现次数上限 如果次数超过max就设定为max max时即为红色
+MAX_RANGE=10 #设定画图时某边出现次数上限 如果次数超过max就设定为max max时即为红色
 PATH = "国际政治事件_100_txt/亲美反共/"
 PATH_EXT="国际政治事件_frequency_10/亲美反共/"
 FILE = "亲美反共_30days.csv"
@@ -53,7 +53,7 @@ EVENT_NAME = "亲美反共"
 ENT_NUM = 20
 FOCUS_ENT = "亲美反共"
 TIME_GRANULARITY = 5
-
+Tri_cnt={}
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
 '中俄关系', '乌克兰', '唐纳德·特朗普']
@@ -96,7 +96,9 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
         # 将两个点作为一个元组添加到列表中
         date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date()-start_time).days
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date()-start_time).days
-        points.append([(date1, item[1]), (date2, item[3]),path[item]])
+        # points.append([(date1, item[1]), (date2, item[3]),path[item]]) 以该边在路径中出现次数作为颜色标准
+        points.append([(date1, item[1]), (date2, item[3]), item[4]])  #以该边在原图中出现次数作为颜色标准
+
     for values in y_list:
         # 普通节点不再通过虚线标识，只标识关注的实体节点
         if (values == ys_en[event_id]):
@@ -172,7 +174,8 @@ def find_paths_back(current_time, current_edge, path,size):
         if current_time+i in tri_time.keys(): #如果时间点内存在三元组才进一步处理
             for t in tri_time[current_time+i]:
                 if current_en==t[0]:
-                    next_edges.append((current_time,t[0],current_time+i,t[1]))
+                    # next_edges.append((current_time,t[0],current_time+i,t[1]))
+                    next_edges.append((current_time, t[0], current_time + i, t[1],t[2]))
 
     if len(next_edges) > 0:
         for next_edge in next_edges:
@@ -229,7 +232,7 @@ def find_paths_front(current_time, current_edge, path,size):
         if current_time-i in tri_time.keys(): #如果时间点内存在三元组才进一步处理
             for t in tri_time[current_time -i]:
                 if current_en == t[1]:
-                    next_edges.append((current_time- i-1, t[0], current_edge[0], t[1]))
+                    next_edges.append((current_time- i-1, t[0], current_edge[0], t[1],t[2]))
 
     if len(next_edges) > 0:
         for next_edge in next_edges:
@@ -285,13 +288,13 @@ def get_path(size):
         path = []
         if( not edge[1]): # event-> 1 作为头实体  那就对event向前找路径 对另一实体向后找路径
             t=Time[edge[2]]
-            tmp=(t-1,event_id,t,edge[0])
+            tmp=(t-1,event_id,t,edge[0],Tri_cnt[(event_id,edge[0],edge[2])])
             #path.append(tmp)
             find_paths_back(t,tmp,path,size) #时间 边 路径
             find_paths_front(t,tmp,path,size)
         else:
             t = Time[edge[2]]
-            tmp = (t - 1, edge[0], t, event_id)
+            tmp = (t - 1, edge[0], t, event_id,Tri_cnt[(edge[0],event_id,edge[2])])
             #path.append(tmp)
             find_paths_back(t, tmp, path,size)
             find_paths_front(t, tmp, path,size)
@@ -305,7 +308,7 @@ def get_path(size):
 
 def get_zitu(id):
     '''
-    将图中所有三元组按照时间存储到对应的tri_time[]内  例如a时间存在 b对c的三元组  则tri_time[a].add((b,c))
+    将图中所有三元组按照时间存储到对应的tri_time[]内  例如a时间存在 b对c的三元组  则tri_time[a].add((b,c,d)) !新添加d 为该三元组的出现次数
     '''
     time_num = 1
     #把出现的时间按顺序添加到Time里
@@ -316,9 +319,7 @@ def get_zitu(id):
             Time[res[2]] = time_num
         a = int(res[0])
         b = int(res[1])
-        # 建边 时间 res[2] i->j  edge[i].add(另一实体j，i是否作为头实体，时间)
-        # end_time=dt.datetime.strptime(res[2], "%Y-%m-%d").date()
-        # start_time = (end_time + dt.timedelta(days=-1)).strftime('%Y-%m-%d')
+
         #将与事件有关的边填入edge内
         if(a==event_id):
             edges.add((b, 0, res[2]))  # 时间 res[2] a->b
@@ -326,7 +327,7 @@ def get_zitu(id):
             edges.add((a, 1, res[2]))
         # zitu.append([start_time, a, res[2], b])
         # tri_time[Time[res[2]]].add((a, b))
-        tri_time.setdefault(Time[res[2]],set()).add((a, b))
+        tri_time.setdefault(Time[res[2]],set()).add((a, b,Tri_cnt[res]))
 
     #举例: second_time=(2018, 1, 6)
     second_time = dt.datetime.strptime(ys_Time[2] , "%Y-%m-%d").date()
@@ -414,7 +415,7 @@ def filt_zitu(num):
         a=ys_en[item[1]]
         b=ys_en[item[3]]  #统计每个三元组的头尾实体映射id
 
-        ys_path[(item[0],a,item[2],b)] = Path[item]
+        ys_path[(item[0],a,item[2],b,item[4])] = Path[item]
 
         #ys_path.append((item[0],a,item[2],b))
 
@@ -492,6 +493,14 @@ def read_csv(in_file):
                 en_num += 1
             triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
 
+            #统计某个（头实体，尾实体，时间）的出现次数
+            try:
+                # 尝试对键为 edge 的值进行递增操作
+                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] += 1
+            except KeyError:
+                # 键不存在时的处理逻辑
+                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] = 1
+
     unique_tri =list(set(map(tuple, triple)))
     sorted_tri = sorted(unique_tri, key=last_element_sort)
     return sorted_tri
@@ -529,7 +538,6 @@ def get_ext():
 if __name__ == '__main__':
 
     #import csv
-
 
     #sorted_T=read_txt(PATH + FILE)
     sorted_T = read_csv(PATH + FILE)
