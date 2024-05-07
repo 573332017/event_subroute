@@ -47,8 +47,10 @@ ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的�
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
 
 TMP_NAME = "倚美谋独"
-PATH = f"国际政治事件_frequency_10/{TMP_NAME}/"
-PATH_EXT=f"国际政治事件_frequency_10/{TMP_NAME}/"
+PATH = f"国际政治事件_double/{TMP_NAME}/"
+PATH_EXT=f"国际政治事件_double/{TMP_NAME}/"
+SAVE_PATH = "国际政治事件_double/"
+
 FILE = "graph0.csv"
 EVENT_NAME = "蔡英文"
 AIM_NAME= "蔡英文"
@@ -63,6 +65,72 @@ E_TIME = '3000-01-01'
 
 # S_TIME = '2017-01-01'
 # E_TIME = '2023-01-01'
+
+# S_TIME = '2006-01-01' # 九二共识
+# E_TIME = '2009-01-01'
+# S_TIME = '2011-01-01' # 九二共识
+# E_TIME = '2013-01-01'
+# S_TIME = '2014-01-01' # 九二共识
+# E_TIME = '2019-01-01'
+# S_TIME = '2019-01-01' # 九二共识
+# E_TIME = '2024-01-01'
+
+# S_TIME = '2007-01-01' # 麦卡锡主义
+# E_TIME = '2011-01-01'
+# S_TIME = '2017-01-01' # 麦卡锡主义
+# E_TIME = '2023-01-01'
+
+# S_TIME = '2011-01-01' # 美对台军售
+# E_TIME = '2012-01-01'
+# S_TIME = '2020-01-01' # 美对台军售
+# E_TIME = '2021-01-01'
+
+# S_TIME = '2006-01-01' # 美台关系
+# E_TIME = '2009-01-01'
+# S_TIME = '2016-01-01' # 美台关系
+# E_TIME = '2024-01-01'
+
+# S_TIME = '2008-01-01' # 美台友谊
+# E_TIME = '2009-01-01'
+# S_TIME = '2020-01-01' # 美台友谊
+# E_TIME = '2021-01-01'
+
+# S_TIME = '2023-01-01' # 美台友谊
+# E_TIME = '2024-01-01'
+# S_TIME = '2021-01-01' # 美台友谊
+# E_TIME = '2022-01-01'
+# S_TIME = '2020-01-01' # 美台友谊
+# E_TIME = '2021-01-01'
+
+# S_TIME = '2020-01-01' # 台美合作
+# E_TIME = '2021-01-01'
+# S_TIME = '2021-01-01' # 台美合作
+# E_TIME = '2023-01-01'
+# S_TIME = '2023-01-01' # 台美合作
+# E_TIME = '2024-01-01'
+
+# S_TIME = '1999-01-01' # 台湾旅行法
+# E_TIME = '2009-01-01'
+# S_TIME = '2009-01-01' # 台湾旅行法
+# E_TIME = '2018-01-01'
+# S_TIME = '2018-01-01' # 台湾旅行法
+# E_TIME = '2020-01-01'
+# S_TIME = '2020-01-01' # 台湾旅行法
+# E_TIME = '2022-01-01'
+# S_TIME = '2022-01-01' # 台湾旅行法
+# E_TIME = '2024-01-01'
+
+# S_TIME = '2017-01-01' # 台湾旅行法
+# E_TIME = '2019-01-01'
+# S_TIME = '2019-01-01' # 台湾旅行法
+# E_TIME = '2022-01-01'
+# S_TIME = '2022-01-01' # 台湾旅行法
+# E_TIME = '2023-01-01'
+
+# S_TIME = '2020-01-01' # 倚美谋独
+# E_TIME = '2021-01-01'
+# S_TIME = '2021-01-01' # 倚美谋独
+# E_TIME = '2024-01-01'
 
 FOCUS_ENT_LIST = ['特朗普', '德国媒体', '美国官员', '中国', '美国国会',
 '俄罗斯', '美国', '中国大陆', '蔡英文', '习近平', '网络强国建设', '金正恩',
@@ -151,8 +219,8 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     for point_pair in ext_points:
         ax.plot([point_pair[0][0], point_pair[1][0]],
                 [point_pair[0][1], point_pair[1][1]], "green")
-    plt.savefig(f'{PATH}{TMP_NAME}_frequency_eventid{str(ys_en[event_id])}_{S_TIME}_{E_TIME}_time{str(TIME_GRANULARITY)}_{flag}.png')
-    print(f"路径绘制完成，保存为{PATH}{TMP_NAME}_frequency_eventid{str(ys_en[event_id])}_{S_TIME}_{E_TIME}_time{str(TIME_GRANULARITY)}_{flag}.png")
+    plt.savefig(f'{SAVE_PATH}{TMP_NAME}_frequency_eventid{str(ys_en[event_id])}_{S_TIME}_{E_TIME}_time{str(TIME_GRANULARITY)}_{flag}.png')
+    print(f"路径绘制完成，保存为{SAVE_PATH}{TMP_NAME}_frequency_eventid{str(ys_en[event_id])}_{S_TIME}_{E_TIME}_time{str(TIME_GRANULARITY)}_{flag}.png")
     # plt.show()
 
 
