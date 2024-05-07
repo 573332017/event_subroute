@@ -10,6 +10,7 @@ import datetime as dt
 from datetime import timedelta
 from dateutil import parser
 from dateutil import rrule
+import numpy as np
 # 设置显示中文字体
 mpl.rcParams["font.sans-serif"] = ["SimHei"]
 # N = 500000
@@ -20,7 +21,8 @@ sorted_T=[]
 entity = {}
 fan_entity={} #反向 数字-》实体
 zitu_path=[]#子图路径按路径输出
-Path=set()#子图路径按边输出
+# Path=set()#子图路径按边输出
+Path={}
 edges = set() #总图中有关event的所有边
 edges_aim=set() #总图中有关aim实体的所有边
 fig, ax = plt.subplots(dpi=150, figsize=(40, 40))
@@ -43,7 +45,7 @@ ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的�
 ext_tri_time={}
 ext_tri_time_g={}
 # PATH = "“台湾关系法”/"
-
+MAX_RANGE=20 #设定画图时某边出现次数上限 如果次数超过max就设定为max max时即为红色
 PATH = "国际政治事件_100_txt/亲美反共/"
 PATH_EXT="国际政治事件_frequency_10/亲美反共/"
 FILE = "亲美反共_30days.csv"
@@ -74,7 +76,9 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     except:
         print("时间粒度太小，路径为空")
         return
-
+    weights = np.linspace(0, 1, MAX_RANGE)  # 权重值，范围从 0 到 1
+    # 设置颜色映射
+    cmap = plt.cm.get_cmap('coolwarm')
     end_time = dt.datetime.strptime(ys_Time[v_time[len(v_time)-1]], "%Y-%m-%d").date()
     Months = rrule.rrule(rrule.MONTHLY, dtstart=start_time, until=end_time).count()
     for i in range(0,Months+1,1):
@@ -88,11 +92,11 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     plt.title(EVENT_NAME + "_event_path_"  + str(ys_en[event_id])+'_'+str(TIME_GRANULARITY))
     #plt.savefig(event_name + '_' + str(ys_en[event_id]) + '.png')
     # 读取文件并解析每行数据
-    for item in path:
+    for item in path.keys():
         # 将两个点作为一个元组添加到列表中
         date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date()-start_time).days
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date()-start_time).days
-        points.append(((date1, item[1]), (date2, item[3])))
+        points.append([(date1, item[1]), (date2, item[3]),path[item]])
     for values in y_list:
         # 普通节点不再通过虚线标识，只标识关注的实体节点
         if (values == ys_en[event_id]):
@@ -104,8 +108,10 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
             
     # 遍历所有点对，绘制线条
     for point_pair in points:
+        if point_pair[2]>=MAX_RANGE: point_pair[2]=MAX_RANGE-1
         ax.plot([point_pair[0][0], point_pair[1][0]],
-                [point_pair[0][1], point_pair[1][1]],col)
+                [point_pair[0][1], point_pair[1][1]],color = cmap(weights[point_pair[2]]))
+
         # plt.draw()
         # plt.pause(0.01)
         plt.scatter(point_pair[0][0], point_pair[0][1], s=10, marker='o', c='red')
@@ -125,17 +131,17 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     #             [point_pair[0][1], point_pair[1][1]],"r")
 
     #在师兄新给的三元组中出现过的路径
-    ext_points = []
-    for item in ext_path:
-        # 将两个点作为一个元组添加到列表中
-        # if (zitu_entity[item[1]] >= 3 and zitu_entity[item[3]] >= 3):  # 路径中该结点出现次数小于3 就滤掉
-        date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date() - start_time).days
-        date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
-        ext_points.append(((date1, item[1]), (date2, item[3])))
-        # spec_points.append(((item[0], ys_en[item[1]]), (item[2], ys_en[item[3]])))
-    for point_pair in ext_points:
-        ax.plot([point_pair[0][0], point_pair[1][0]],
-                [point_pair[0][1], point_pair[1][1]], "green")
+    # ext_points = []
+    # for item in ext_path:
+    #     # 将两个点作为一个元组添加到列表中
+    #     # if (zitu_entity[item[1]] >= 3 and zitu_entity[item[3]] >= 3):  # 路径中该结点出现次数小于3 就滤掉
+    #     date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date() - start_time).days
+    #     date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
+    #     ext_points.append(((date1, item[1]), (date2, item[3])))
+    #     # spec_points.append(((item[0], ys_en[item[1]]), (item[2], ys_en[item[3]])))
+    # for point_pair in ext_points:
+    #     ax.plot([point_pair[0][0], point_pair[1][0]],
+    #             [point_pair[0][1], point_pair[1][1]], "green")
 
     plt.savefig(f'{PATH}{EVENT_NAME}_event-contained_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}_{flag}.png')
     print(f"路径绘制完成，保存为{PATH}{EVENT_NAME}_event-contained_eventid{str(ys_en[event_id])}_time{str(TIME_GRANULARITY)}_{flag}.png")
@@ -176,7 +182,13 @@ def find_paths_back(current_time, current_edge, path,size):
 
     # 按照边的形式输出 画图
     for edge in path:
-        Path.add(edge)
+        try:
+            # 尝试对键为 edge 的值进行递增操作
+            Path[edge] += 1
+        except KeyError:
+            # 键不存在时的处理逻辑
+            Path[edge] = 1
+        # Path.add(edge)
         #以时间为索引 存储event_path的所有边
         ext_tri_time.setdefault(edge[2], set()).add((edge[1], edge[3]))
         # 额外记录该边是否在师兄新给的以时间命名的三元组内
@@ -228,7 +240,13 @@ def find_paths_front(current_time, current_edge, path,size):
     #按照边的形式输出 画图
 
     for edge in path:
-        Path.add(edge)
+        try:
+            # 尝试对键为 edge 的值进行递增操作
+            Path[edge] += 1
+        except KeyError:
+            # 键不存在时的处理逻辑
+            Path[edge] = 1
+        # Path.add(edge)
         #额外记录该边是否在师兄新给的以时间命名的三元组内
         if edge[0] in ext_tri_time.keys():
             tmp= ext_tri_time[edge[0]]
@@ -279,7 +297,7 @@ def get_path(size):
             find_paths_front(t, tmp, path,size)
 
     #找与focus_entity有关的路径 因为暂时不需要 所以注释掉
-    # l_path = list(Path)
+    # l_path = list(Path.keys())
     # for edge in l_path:
     #     s_path = []
     #     find_paths(l_path, edge, s_path)
@@ -319,7 +337,7 @@ def filt_zitu(num):
     '''
     挑选路径中出现次数最多的num个实体，重新映射编号，将不在这num个实体的路径滤掉
     '''
-    for item in Path:
+    for item in Path.keys():
         zitu_entity[item[1]] = zitu_entity.get(item[1], 0) + 1
         zitu_entity[item[3]] = zitu_entity.get(item[3], 0) + 1
         value_time.add(item[0])
@@ -379,7 +397,8 @@ def filt_zitu(num):
             num_en.append(i[0])
             ext += 1
     #print(ys_en[event_id],zitu_entity[event_id])
-    ys_path=[]
+    # ys_path=[]
+    ys_path = {}
     ys_spec_path=[]
     ys_ext_path=[]
     ys_ext_g_path=[]
@@ -390,11 +409,14 @@ def filt_zitu(num):
             y_list.append(ys_en[i])
             y_label.append(fan_entity[i])
 
-    for item in Path:
+    for item in Path.keys():
         if item[1] not in ys_en or item[3] not in ys_en: continue #路径中结点不再出现最多的num个实体内 就滤掉
         a=ys_en[item[1]]
         b=ys_en[item[3]]  #统计每个三元组的头尾实体映射id
-        ys_path.append((item[0],a,item[2],b))
+
+        ys_path[(item[0],a,item[2],b)] = Path[item]
+
+        #ys_path.append((item[0],a,item[2],b))
 
     for item in spec_path:
         if item[1] not in ys_en or item[3] not in ys_en: continue  # 路径中结点不再出现最多的num个实体内 就滤掉
