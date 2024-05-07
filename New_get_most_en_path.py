@@ -49,7 +49,7 @@ ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的�
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
 Tri_cnt={}
 TMP_NAME = "反美猪公投"
-PATH = f"国际政治事件_frequency_10/{TMP_NAME}/"
+PATH = f"国际政治事件_100_txt/{TMP_NAME}/"
 PATH_EXT=f"国际政治事件_frequency_10/{TMP_NAME}/"
 SAVE_PATH = "国际政治事件_double/"
 
