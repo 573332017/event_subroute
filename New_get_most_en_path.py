@@ -46,7 +46,7 @@ spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
 
-TMP_NAME = "倚美谋独"
+TMP_NAME = "美台友谊"
 PATH = f"国际政治事件_double/{TMP_NAME}/"
 PATH_EXT=f"国际政治事件_double/{TMP_NAME}/"
 SAVE_PATH = "国际政治事件_double/"
@@ -56,8 +56,8 @@ EVENT_NAME = "蔡英文"
 AIM_NAME= "蔡英文"
 ENT_NUM = 40
 FOCUS_ENT = "蔡英文"
-TIME_GRANULARITY = 5 # 时间粒度控制
-ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
+TIME_GRANULARITY = 1 # 时间粒度控制
+ROUTE_LEN = 1 # 路径长度控制，过滤小于该长度的路径
 
 # 设定读取的三元组时间范围，因为有些事件的时间跨度较大，不便展示
 S_TIME = '1000-01-01' # 不限时间范围
@@ -447,7 +447,7 @@ def filt_zitu(num):
     #print(ys_en[event_id],zitu_entity[event_id])
     #取出现次数最多的num个元素构成的子图
 
-    with open(PATH + 'ys_node_mapping.txt', 'w',encoding='utf-8') as output_file:
+    with open(f'{PATH}{TMP_NAME}.txt', 'w',encoding='utf-8') as output_file:
         for i in num_en:
             output_file.write(f"{fan_entity[i]}  映射为： {ys_en[i]} 出现次数：{zitu_entity[i]} \n")
             # if(ys_en[i]>=down and ys_en[i[0]]<=up):
