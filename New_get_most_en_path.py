@@ -57,7 +57,7 @@ FILE = "graph0.csv"
 EVENT_NAME = "蔡英文"
 AIM_NAME= "蔡英文"
 ENT_NUM = 40
-FOCUS_ENT = "反莱猪公投"
+FOCUS_ENT = "蔡英文"
 TIME_GRANULARITY = 5 # 时间粒度控制
 ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
 
