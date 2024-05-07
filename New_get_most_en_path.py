@@ -48,12 +48,12 @@ spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
 
-TMP_NAME = "倚美谋独"
-PATH = f"国际政治事件_double/{TMP_NAME}/"
+TMP_NAME = "蔡英文“过境”窜美"
+PATH = f"国际政治事件_100_txt/{TMP_NAME}/"
 PATH_EXT=f"国际政治事件_double/{TMP_NAME}/"
 SAVE_PATH = "国际政治事件_double/"
 
-FILE = "graph0.csv"
+FILE = "蔡英文“过境”窜美_30days.csv"
 EVENT_NAME = "蔡英文"
 AIM_NAME= "蔡英文"
 ENT_NUM = 40
@@ -64,7 +64,7 @@ ROUTE_LEN = 2 # 路径长度控制，过滤小于该长度的路径
 # 设定读取的三元组时间范围，因为有些事件的时间跨度较大，不便展示
 S_TIME = '1000-01-01' # 不限时间范围
 E_TIME = '3000-01-01'
-MAX_RANGE=20 #设定画图时某边出现次数上限 如果次数超过max就设定为max max时即为红色
+MAX_RANGE=100 #设定画图时某边出现次数上限 如果次数超过max就设定为max max时即为红色
 # S_TIME = '2017-01-01'
 # E_TIME = '2023-01-01'
 
@@ -157,9 +157,9 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
     except:
         print("时间粒度太小，路径为空")
         return
-    weights = np.linspace(0.2, 1, MAX_RANGE)  # 权重值，范围从 0 到 1
+    weights = np.linspace(0.4, 1, MAX_RANGE)  # 权重值，范围从 0 到 1
     # 设置颜色映射
-    cmap = plt.cm.get_cmap('coolwarm')
+    cmap = plt.colormaps.get_cmap('coolwarm')
     end_time = dt.datetime.strptime(ys_Time[v_time[len(v_time) - 1]], "%Y-%m-%d").date()
     Months = rrule.rrule(rrule.MONTHLY, dtstart=start_time, until=end_time).count()
     for i in range(0, Months + 1, 1):
