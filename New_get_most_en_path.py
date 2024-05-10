@@ -48,12 +48,12 @@ spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
 Tri_cnt={}
-TMP_NAME = "蔡英文“过境”窜美"
-PATH = f"国际政治事件_double/{TMP_NAME}/"
+TMP_NAME = "反美猪公投"
+PATH = f"国际政治事件_100_txt/{TMP_NAME}/"
 PATH_EXT=f"国际政治事件_double/{TMP_NAME}/"
-SAVE_PATH = "国际政治事件_double/"
+SAVE_PATH = "国际政治事件_double/result/"
 
-FILE = "graph0.csv"
+FILE = f"{TMP_NAME}_30days.csv"
 EVENT_NAME = "蔡英文"
 AIM_NAME= "蔡英文"
 ENT_NUM = 40
