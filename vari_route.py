@@ -23,10 +23,10 @@ diff_en_pre={} #当前时间区间出现 前一时间区间未出现的实体
 diff_en_lat={} #前一时间区间出现 当前时间区间未出现的实体
 same_tri={}
 same_en={}
-TMP_NAME = "亲美反共"
-PATH = f"国际政治事件_100_txt/{TMP_NAME}/"
-PATH_EXT=f"国际政治事件_frequency_10/{TMP_NAME}/"
-FILE = f"{TMP_NAME}_30days.csv"
+TMP_NAME = "反美猪公投"
+PATH = f"国际政治事件_4month/{TMP_NAME}/"
+# PATH_EXT=f"国际政治事件_frequency_10/{TMP_NAME}/"
+FILE = f"{TMP_NAME}_4month.csv"
 TIME_GRANULARITY = 7
 
 def read_csv(in_file):
