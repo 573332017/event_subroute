@@ -48,12 +48,14 @@ spec_path=set()
 ext_Path=set()   #存储师兄新给的以时间命名的csv 所有路径下的三元组
 ext_Path_g=set() #存储师兄新给的以graphx命名的csv 所有路径下的三元组
 Tri_cnt={}
-TMP_NAME = "蔡英文“过境”窜美"
-PATH = f"国际政治事件_double/{TMP_NAME}/"
-PATH_EXT=f"国际政治事件_double/{TMP_NAME}/"
-SAVE_PATH = "国际政治事件_double/"
+TMP_NAME = "蔡英文连任_4month"
+FROM = "吴"
+#PATH = f"{FROM}/{TMP_NAME}/"
+PATH = f"{FROM}/"
+PATH_EXT=f"{FROM}/{TMP_NAME}/"
+SAVE_PATH = f"{FROM}/"
 
-FILE = "graph0.csv"
+FILE = "蔡英文连任_4month.csv"
 EVENT_NAME = "蔡英文"
 AIM_NAME= "蔡英文"
 ENT_NUM = 40
@@ -177,6 +179,8 @@ def draw_lines_from_file(path,s_path,ext_path,flag,col):
         # 将两个点作为一个元组添加到列表中
         date1 = (dt.datetime.strptime(ys_Time[item[0]], "%Y-%m-%d").date() - start_time).days
         date2 = (dt.datetime.strptime(ys_Time[item[2]], "%Y-%m-%d").date() - start_time).days
+        if date2- date1>TIME_GRANULARITY:
+            print(item[0],item[2],ys_Time[item[0]],ys_Time[item[2]]);
         #points.append([(date1, item[1]), (date2, item[3]),path[item]]) #以该边在路径中出现次数作为颜色标准
         points.append([(date1, item[1]), (date2, item[3]), item[4]])  # 以该边在原图中出现次数作为颜色标准
     for values in y_list:
@@ -348,7 +352,9 @@ def get_zitu_time(id):
     '''
     time_num = 1
     for res in sorted_T:
+        #now_time = (dt.datetime.strptime(res[2], "%Y-%m-%d").date()).strftime('%Y-%m-%d')
         pre_time=(dt.datetime.strptime(res[2], "%Y-%m-%d").date() + dt.timedelta(days=-1)).strftime('%Y-%m-%d')
+
         if pre_time not in Time:
             time_num += 1
             ys_Time[time_num] = pre_time
@@ -553,15 +559,16 @@ def read_csv(in_file):
                 en_num += 1
             
             time_data = dt.datetime.strptime(elements[5], "%Y-%m-%d").date()
+            now_time = (time_data).strftime('%Y-%m-%d')
             if time_data >= dt.datetime.strptime(S_TIME, "%Y-%m-%d").date() and time_data <= dt.datetime.strptime(E_TIME, "%Y-%m-%d").date():
-                triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
-            # 统计某个（头实体，尾实体，时间）的出现次数
-            try:
-                # 尝试对键为 edge 的值进行递增操作
-                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] += 1
-            except KeyError:
-                # 键不存在时的处理逻辑
-                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] = 1
+                triple.append([entity[elements[0]], entity[elements[3]], now_time])
+                # 统计某个（头实体，尾实体，时间）的出现次数
+                try:
+                    # 尝试对键为 edge 的值进行递增操作
+                    Tri_cnt[(entity[elements[0]], entity[elements[3]], now_time)] += 1
+                except KeyError:
+                    # 键不存在时的处理逻辑
+                    Tri_cnt[(entity[elements[0]], entity[elements[3]], now_time)] = 1
     unique_tri =list(set(map(tuple, triple)))
     sorted_tri = sorted(unique_tri, key=last_element_sort)
     return sorted_tri
@@ -616,7 +623,7 @@ if __name__ == '__main__':
 
     focus_entity = entity[FOCUS_ENT]
     focus_entity_list = [entity[e] for e in FOCUS_ENT_LIST if e in entity.keys()]
-    get_ext()
+    #get_ext()
     get_path(TIME_GRANULARITY)# 获得子图路径
 
     # flag =0 时 考虑以时间命名的csv文件  flag=1 时考虑以graphx命名的csv文件

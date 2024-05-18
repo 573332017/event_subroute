@@ -491,15 +491,16 @@ def read_csv(in_file):
                 entity[elements[3]] = en_num
                 fan_entity[en_num] = elements[3]
                 en_num += 1
-            triple.append([entity[elements[0]], entity[elements[3]], elements[5]])
+            now_time = (dt.datetime.strptime(elements[5], "%Y-%m-%d").date()).strftime('%Y-%m-%d')
+            triple.append([entity[elements[0]], entity[elements[3]], now_time])
 
             #统计某个（头实体，尾实体，时间）的出现次数
             try:
                 # 尝试对键为 edge 的值进行递增操作
-                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] += 1
+                Tri_cnt[(entity[elements[0]], entity[elements[3]], now_time)] += 1
             except KeyError:
                 # 键不存在时的处理逻辑
-                Tri_cnt[(entity[elements[0]], entity[elements[3]], elements[5])] = 1
+                Tri_cnt[(entity[elements[0]], entity[elements[3]], now_time)] = 1
 
     unique_tri =list(set(map(tuple, triple)))
     sorted_tri = sorted(unique_tri, key=last_element_sort)
